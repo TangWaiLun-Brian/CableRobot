@@ -1,5 +1,10 @@
 # Milestone 1 validation report
 
+This document preserves historical validation evidence; it is not an accepted
+milestone record. The current foundation/routed-animation scope is
+**IMPLEMENTED — AWAITING REVIEW**. See `.review/` for the current handoff and
+`docs/milestones/README.md` for the acceptance-record procedure.
+
 Validated on 2026-09-30. The standalone repository is delivered at
 `C:\Users\thisi\OneDrive\Desktop\CableRobot`.
 

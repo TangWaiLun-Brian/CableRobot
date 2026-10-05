@@ -11,4 +11,3 @@ class NumPyBackend:
 
     def solve_tension_problem(self, problem: TensionProblem) -> TensionAllocationResult:
         return allocate_tensions(problem.force_matrix, problem.target, problem.lower, problem.upper, tolerance=problem.tolerance)
-

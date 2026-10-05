@@ -12,9 +12,6 @@ from cablerobot.model import Attachment, Body, Cable, CableRobot, CableRoute, Fr
 
 def robot_to_dict(robot: CableRobot) -> dict:
     robot.validate()
-    for name in robot.bodies:
-        if not np.allclose(robot.frames[name].T_body_frame, np.eye(4), atol=1e-12):
-            raise ValueError("same-named body frames must remain identity; add a separate offset frame")
     return {
         "schema_version": 1,
         "name": robot.name,

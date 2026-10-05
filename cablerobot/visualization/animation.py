@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from itertools import product
+import os
 from pathlib import Path
+import tempfile
 from typing import Mapping, Sequence
 
 import numpy as np
@@ -67,16 +69,28 @@ class RobotAnimation:
         output = Path(path)
         fps = self.panels[0].trajectory.fps
         if output.suffix.lower() == ".gif":
-            writer = PillowWriter(fps=fps)
+            frame_ms = round(1000.0 / fps / 10.0) * 10
+            if frame_ms < 10 or not np.isclose(1000.0 / fps, frame_ms, atol=1e-9, rtol=0):
+                raise ValueError("GIF frame duration must be an exact positive multiple of 10 ms; use e.g. 10, 20, 25 or 50 fps, or export MP4")
+            # Pillow truncates duration to integer milliseconds. Avoid a
+            # one-ulp shortfall for representable rates such as 100/3 fps.
+            writer = PillowWriter(fps=float(np.nextafter(1000.0 / frame_ms, 0.0)))
         elif output.suffix.lower() == ".mp4":
             if not FFMpegWriter.isAvailable():
                 raise RuntimeError("MP4 export requires FFmpeg; GIF export uses Matplotlib's Pillow writer")
             writer = FFMpegWriter(fps=fps, codec="libx264",
-                                  extra_args=["-pix_fmt", "yuv420p", "-crf", "20"])
+                                  extra_args=["-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2", "-pix_fmt", "yuv420p", "-crf", "20"])
         else:
             raise ValueError("animation output must have .gif or .mp4 extension")
         output.parent.mkdir(parents=True, exist_ok=True)
-        self.animation.save(str(output), writer=writer, dpi=dpi)
+        descriptor, filename = tempfile.mkstemp(prefix=f".{output.stem}.", suffix=output.suffix, dir=output.parent)
+        os.close(descriptor)
+        temporary = Path(filename)
+        try:
+            self.animation.save(str(temporary), writer=writer, dpi=dpi)
+            temporary.replace(output)
+        finally:
+            temporary.unlink(missing_ok=True)
 
     def close(self) -> None:
         import matplotlib.pyplot as plt
@@ -207,8 +221,9 @@ def animate_robots(panels: Sequence[AnimationPanel], *, figsize=None) -> RobotAn
         raise ValueError("at least one animation panel is required")
     first = panels[0].trajectory
     if any(len(panel.trajectory.times) != len(first.times) or
-           not np.isclose(panel.trajectory.fps, first.fps) for panel in panels):
-        raise ValueError("animation panels must have the same frame count and fps")
+           not np.isclose(panel.trajectory.fps, first.fps, atol=1e-12, rtol=0) or
+           not np.allclose(panel.trajectory.times, first.times, atol=1e-12, rtol=0) for panel in panels):
+        raise ValueError("animation panels must have the same frame count, fps and timeline")
     figure = plt.figure(figsize=figsize or ((9, 6.4) if len(panels) == 1 else (16, 6.4)), facecolor="white")
     views = [_RobotView(figure.add_subplot(1, len(panels), index + 1, projection="3d"), panel)
              for index, panel in enumerate(panels)]

@@ -8,6 +8,11 @@ Milestone 1 uses massless, straight, tension-only cable segments. Python owns ro
 topology and semantics. NumPy is the working numerical backend; MATLAB is an optional
 adapter boundary.
 
+Status: **IMPLEMENTED — AWAITING REVIEW**. The foundation and routed-animation
+implementation is awaiting external acceptance; no next milestone has begun.
+Read [contribution instructions](CONTRIBUTING.md) and the required
+[development workflow](docs/development_workflow.md) before changing it.
+
 ## Install and run
 
 Python 3.11 or newer is required.
@@ -72,6 +77,8 @@ Local kinematic solvers require a reasonable initial guess and do not resolve gl
 ambiguity. Degenerate zero-length segments have no differentiable cable direction.
 For at most eight cables, allocation exhaustively checks box active sets; larger
 problems use projected least squares and can report `numerically_unresolved`.
+Infeasibility requires a separating certificate; a stalled iteration is not proof
+that equilibrium is impossible.
 The reference allocator prioritizes feasibility, with no guarantee of a preferred
 minimum-norm or energy-optimal tension distribution. See the documented tolerances.
 
@@ -89,6 +96,8 @@ motors, flexible links, closed kinematic loops and hardware communication are de
 - [Numerical backends and MATLAB boundary](docs/backends.md)
 - [Validation report](docs/validation.md)
 - [Serial/hybrid cable routing and animations](docs/routing_animation.md)
+- [Review correction decisions](docs/review_corrections.md)
+- [Milestone record index](docs/milestones/README.md)
 
 Repository layout follows the specification: `model`, `kinematics`, `statics`,
 `allocation`, `dynamics`, `analysis`, `simulation`, `backends`, `visualization`, `io`,

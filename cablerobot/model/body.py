@@ -20,6 +20,8 @@ class Body:
     def __post_init__(self) -> None:
         if not self.name:
             raise ValueError("body name cannot be empty")
+        if not isinstance(self.fixed, bool):
+            raise ValueError("fixed must be a boolean")
         if not np.isfinite(self.mass) or self.mass < 0.0:
             raise ValueError("body mass cannot be negative")
         self.center_of_mass = np.asarray(self.center_of_mass, dtype=float)
@@ -30,7 +32,7 @@ class Body:
             raise ValueError("inertia must have shape (3, 3)")
         if not np.all(np.isfinite(self.center_of_mass)) or not np.all(np.isfinite(self.inertia)):
             raise ValueError("body inertial data must be finite")
-        if not np.allclose(self.inertia, self.inertia.T, atol=1e-12) or np.min(np.linalg.eigvalsh(self.inertia)) < -1e-12:
+        if not np.allclose(self.inertia, self.inertia.T, atol=1e-12, rtol=0) or np.min(np.linalg.eigvalsh(self.inertia)) < -1e-12:
             raise ValueError("inertia must be symmetric positive semidefinite")
         if not np.isfinite(self.visual_size) or self.visual_size <= 0.0:
             raise ValueError("visual_size must be positive and finite")

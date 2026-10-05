@@ -29,7 +29,7 @@ def numerical_terms(robot, state, provider: DynamicsProvider):
     bias = validate_generalized_vector(robot, state, provider.bias_force(robot, state), "bias force")
     if matrix.shape != (robot.dof, robot.dof) or not np.all(np.isfinite(matrix)):
         raise ValueError("mass matrix has an invalid shape or nonfinite values")
-    if not np.allclose(matrix, matrix.T, atol=1e-10):
+    if not np.allclose(matrix, matrix.T, atol=1e-10, rtol=0):
         raise ValueError("mass matrix must be symmetric")
     if robot.dof:
         try:

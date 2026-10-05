@@ -66,16 +66,49 @@ def _enumerated_box_least_squares(
     return np.clip(best, lower, upper)
 
 
-def _projected_least_squares(matrix: NDArray[np.float64], target: NDArray[np.float64], lower: NDArray[np.float64], upper: NDArray[np.float64]) -> tuple[NDArray[np.float64], bool]:
+def _projected_least_squares(matrix: NDArray[np.float64], target: NDArray[np.float64], lower: NDArray[np.float64], upper: NDArray[np.float64]) -> NDArray[np.float64]:
     value = np.clip(np.linalg.lstsq(matrix, target, rcond=None)[0], lower, upper)
     spectral = float(np.linalg.norm(matrix, 2))
     step = 1.0 / max(spectral * spectral, 1e-12)
     for _ in range(10_000):
         updated = np.clip(value - step * matrix.T @ (matrix @ value - target), lower, upper)
         if np.linalg.norm(updated - value) <= 1e-12 * (1.0 + np.linalg.norm(value)):
-            return updated, True
+            return updated
         value = updated
-    return value, False
+    return value
+
+
+def _separates_target(matrix, target, lower, upper, residual, threshold) -> bool:
+    """Conservatively certify distance from the force set using its support.
+
+    A small iterate change is not an optimality or infeasibility certificate.
+    For unit w, w @ target - support(B [lower, upper], w) is a lower
+    bound on the distance to that set. Floating-point cancellation can make
+    this inconclusive; it must never be resolved by guessing infeasibility.
+    """
+    norm = float(np.linalg.norm(residual))
+    if norm == 0.0 or not np.isfinite(norm):
+        return False
+    direction = -residual / norm
+    with np.errstate(over="ignore", invalid="ignore"):
+        coefficients = matrix.T @ direction
+        # Overestimate each projection's support contribution, including
+        # cancellation within B.T @ direction. Bounds are nonnegative, so
+        # increasing a coefficient cannot decrease the support function.
+        coefficient_error = (8 * np.finfo(float).eps * max(1, matrix.shape[0])
+                             * (np.abs(matrix).T @ np.abs(direction)))
+        coefficients = coefficients + coefficient_error
+        positive = coefficients > 0.0
+        if np.any(~np.isfinite(coefficients)) or np.any(~np.isfinite(upper[positive])):
+            return False
+        contributions = coefficients * lower
+        contributions[positive] = coefficients[positive] * upper[positive]
+        projected_target = float(direction @ target)
+        support = float(np.sum(contributions))
+        roundoff = (64 * np.finfo(float).eps * max(1, *matrix.shape)
+                    * (np.sum(np.abs(direction * target)) + np.sum(np.abs(contributions))))
+        gap = projected_target - support
+    return bool(np.isfinite(gap) and np.isfinite(roundoff) and gap > threshold + roundoff)
 
 
 def allocate_tensions(
@@ -100,24 +133,27 @@ def allocate_tensions(
         raise ValueError("matrix, target and lower bounds must be finite; upper bounds may be +inf")
     if not np.isfinite(tolerance) or tolerance <= 0.0:
         raise ValueError("tolerance must be positive and finite")
-    certified = True
     try:
         if matrix.size == 0 or not np.any(matrix):
             tensions = lower.copy()
         elif matrix.shape[1] <= 8:
             tensions = _enumerated_box_least_squares(matrix, target, lower, upper)
         else:
-            tensions, certified = _projected_least_squares(matrix, target, lower, upper)
+            tensions = _projected_least_squares(matrix, target, lower, upper)
     except np.linalg.LinAlgError as error:
         achieved = matrix @ lower
         return TensionAllocationResult(AllocationStatus.NUMERICAL_FAILURE, lower.copy(), achieved, target, achieved - target, float("inf"), str(error))
-    achieved = matrix @ tensions
-    residual = achieved - target
-    norm = float(np.linalg.norm(residual))
-    scale = 1.0 + float(np.linalg.norm(target))
+    with np.errstate(over="ignore", invalid="ignore"):
+        achieved = matrix @ tensions
+        residual = achieved - target
+        norm = float(np.linalg.norm(residual))
+        scale = 1.0 + float(np.linalg.norm(target))
+    if not np.all(np.isfinite(achieved)) or not np.isfinite(norm) or not np.isfinite(scale):
+        return TensionAllocationResult(AllocationStatus.NUMERICAL_FAILURE, tensions, achieved, target, residual, norm, "nonfinite force or residual arithmetic")
     feasible = norm <= tolerance * scale
+    certified = not feasible and _separates_target(matrix, target, lower, upper, residual, tolerance * scale)
     status = AllocationStatus.FEASIBLE if feasible else (AllocationStatus.INFEASIBLE if certified else AllocationStatus.NUMERICALLY_UNRESOLVED)
-    message = "bounded equilibrium found" if feasible else ("target lies outside the bounded cable-force set" if certified else "iteration limit reached without a feasibility or optimality certificate")
+    message = "bounded equilibrium found" if feasible else ("separating hyperplane certifies target outside the bounded cable-force set" if certified else "reference solver stopped without a feasibility or infeasibility certificate")
     return TensionAllocationResult(status, tensions, achieved, target, residual, norm, message)
 
 
@@ -136,8 +172,8 @@ def solve_tension_allocation(
         applied += gravity_generalized_force(robot, state)
     if external_load is not None:
         extra = np.asarray(external_load, dtype=float)
-        if extra.shape != (robot.dof,):
-            raise ValueError("external_load has the wrong shape")
+        if extra.shape != (robot.dof,) or not np.all(np.isfinite(extra)):
+            raise ValueError("external_load must be a finite generalized vector")
         applied += extra
     lower, upper = robot.tension_bounds()
     return allocate_tensions(robot.cable_force_matrix(state), -applied, lower, upper, tolerance=tolerance)

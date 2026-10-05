@@ -52,7 +52,11 @@ all robots also produces `three_robots.gif` and/or `three_robots.mp4`.
 `motion_traces.json` stores timestamps, q, qd, cable names, route frames, classification
 and cable lengths for every frame. It explicitly records `dynamics_solved: false`.
 GIF timing is quantized by the format to 10 ms increments; the default 20 fps has
-exact 50 ms frames.
+exact 50 ms frames. Export rejects rates that cannot preserve the requested frame
+duration (for example 30 or 120 fps); use a representable rate or MP4. Timeline
+validation uses explicit absolute tolerances. Exports replace the destination only
+after successful encoding, preserving existing files on failure. H.264/yuv420p MP4
+frames are padded to even pixel dimensions when needed.
 
 ## Kinematic simulation boundary
 
@@ -76,7 +80,9 @@ Colors identify attachment topology rather than computed tension.
 
 ## Verification
 
-The final expanded suite passes **87 tests in 5.64 seconds** on Python 3.12.13. New tests
+The original routing expansion passed **87 tests in 5.64 seconds** on Python 3.12.13.
+This is historical validation, not external milestone acceptance. Current correction
+results belong in the pending `.review/` handoff until acceptance. Those original tests
 cover both route classes, guide motion, summed segment lengths, shared-motion
 invariance, articulation response, same-body routing, Jacobian directional checks,
 virtual work, intermediate-guide body wrench contributions and JSON round trips.

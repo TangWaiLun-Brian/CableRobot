@@ -10,6 +10,9 @@ to the reference allocation implementation.
 raises `BackendUnavailableError` with an installation explanation. A detected engine
 still raises an explicit adapter-not-implemented error in this milestone. No MATLAB
 process is started and no MATLAB installation is required by baseline tests.
+`get_backend("matlab")` rejects explicit selection, including geometry-only analysis,
+until a solver is implemented. `MatlabBackend.available()` only detects engine
+installation; it does not mean this repository has a usable MATLAB solver.
 
 ## Numerical boundary contract
 

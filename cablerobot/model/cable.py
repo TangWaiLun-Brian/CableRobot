@@ -18,6 +18,10 @@ class Cable:
     stiffness: float | None = None
 
     def __post_init__(self) -> None:
+        self.validate()
+
+    def validate(self) -> None:
+        """Check mutable cable data without changing the declared route or bounds."""
         if not self.name:
             raise ValueError("cable name cannot be empty")
         if not np.isfinite(self.tension_min) or self.tension_min < 0.0:

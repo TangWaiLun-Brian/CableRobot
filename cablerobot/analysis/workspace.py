@@ -37,4 +37,3 @@ def analyze_wrench_workspace(
     else:
         get_backend(backend)  # validate selection without doing unnecessary work
     return WrenchAnalysisResult(backend, force_set, allocation)
-

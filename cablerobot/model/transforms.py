@@ -28,11 +28,11 @@ def validate_transform(value: ArrayLike, name: str = "transform") -> NDArray[np.
         raise ValueError(f"{name} must have shape (4, 4)")
     if not np.all(np.isfinite(T)):
         raise ValueError(f"{name} must be finite")
-    if not np.allclose(T[3], [0.0, 0.0, 0.0, 1.0], atol=1e-12):
+    if not np.allclose(T[3], [0.0, 0.0, 0.0, 1.0], atol=1e-12, rtol=0):
         raise ValueError(f"{name} has an invalid homogeneous bottom row")
-    if not np.allclose(T[:3, :3].T @ T[:3, :3], np.eye(3), atol=1e-9):
+    if not np.allclose(T[:3, :3].T @ T[:3, :3], np.eye(3), atol=1e-9, rtol=0):
         raise ValueError(f"{name} rotation must be orthonormal")
-    if not np.isclose(np.linalg.det(T[:3, :3]), 1.0, atol=1e-9):
+    if not np.isclose(np.linalg.det(T[:3, :3]), 1.0, atol=1e-9, rtol=0):
         raise ValueError(f"{name} rotation must be proper (determinant +1)")
     return T.copy()
 

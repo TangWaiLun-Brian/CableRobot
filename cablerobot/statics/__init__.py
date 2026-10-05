@@ -11,4 +11,3 @@ __all__ = [
     "gravity_generalized_force",
     "solve_tension_allocation",
 ]
-

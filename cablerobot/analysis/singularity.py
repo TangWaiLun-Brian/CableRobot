@@ -8,5 +8,5 @@ from cablerobot.model.state import RobotState
 
 
 def cable_jacobian_rank(robot, state: RobotState, tolerance: float | None = None) -> int:
-    return int(np.linalg.matrix_rank(robot.cable_jacobian(state), tol=tolerance))
-
+    matrix = robot.cable_jacobian(state)
+    return 0 if matrix.size == 0 else int(np.linalg.matrix_rank(matrix, tol=tolerance))

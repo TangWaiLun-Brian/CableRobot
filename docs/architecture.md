@@ -1,5 +1,10 @@
 # Architecture and first milestone
 
+Review status: **IMPLEMENTED — AWAITING REVIEW**. See
+[review correction decisions](review_corrections.md) for the rationale and
+compatibility consequences of the current hardening, recorded before its code
+changes. Model topology, state ordering and force signs are unchanged.
+
 `CableRobot` owns bodies, joints, frames, routes, physical parameters and coordinate
 ordering. Topology is a directed tree or forest with one parent per non-root body.
 It is validated before body kinematics. Closed loops need future constraint equations;

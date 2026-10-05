@@ -20,4 +20,3 @@ class Frame:
         if not self.name or not self.body:
             raise ValueError("frame name and body are required")
         self.T_body_frame = validate_transform(self.T_body_frame, "T_body_frame")
-

@@ -15,6 +15,8 @@ Rotations are proper 3-by-3 matrices. The homogeneous last row is `[0, 0, 0, 1]`
 A frame is rigidly attached to one body by `T_body_frame`. Each body has a same-named
 identity frame. Root body transforms are identity in world. Multiple fixed roots are
 allowed; offset world anchors can be declared through frames or fixed joints.
+Same-named body frames cannot be repurposed: add a separately named offset frame.
+Transform invariants use absolute tolerances (`rtol=0`), not relative relaxation.
 
 For a parent/child joint:
 
@@ -85,8 +87,13 @@ Jacobian and wrench computations. Local solvers use damped Gauss-Newton with
 backtracking. Pose rotation weight has units metres per radian relative to translation.
 
 Allocation is feasible when residual norm is no more than
-`tolerance * (1 + norm(target))`; default `tolerance=1e-8`. Infeasible means the small
-active-set search or converged box least-squares optimum cannot satisfy that tolerance.
-An iteration-limited large problem is numerically unresolved. Numerical linear-algebra
-failure is distinguished separately. Do not interpret an unresolved result as proof
-that no physical equilibrium exists.
+`tolerance * (1 + norm(target))`; default `tolerance=1e-8`. Infeasibility requires a
+separating hyperplane: for a unit residual direction `w`,
+`w @ target - support(B [lower, upper], w)` must exceed the accepted residual
+threshold and a floating-point guard. The support chooses upper bounds for positive
+`B.T @ w` coefficients and lower bounds otherwise. An unbounded positive support
+contribution or inconclusive separation cannot certify infeasibility. A stalled or
+iteration-limited solve without either a feasible witness or separation is
+numerically unresolved, including small problems when conditioning prevents proof.
+Numerical linear-algebra failure is distinguished separately. Do not interpret an
+unresolved result as proof that no physical equilibrium exists.

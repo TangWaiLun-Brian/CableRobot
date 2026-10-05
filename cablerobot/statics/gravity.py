@@ -15,6 +15,7 @@ if False:  # pragma: no cover
 def gravity_generalized_force(robot: "CableRobot", state: RobotState) -> NDArray[np.float64]:
     """Return the applied generalized force due to gravity, sum(J_com.T m g)."""
     robot.validate_state(state)
+    robot.validate()
     generalized = np.zeros(robot.dof)
     for body in robot.bodies.values():
         if body.mass == 0.0 or body.fixed:
@@ -22,4 +23,3 @@ def gravity_generalized_force(robot: "CableRobot", state: RobotState) -> NDArray
         jacobian = point_jacobian(robot, state, body.name, body.center_of_mass)
         generalized += jacobian.T @ (body.mass * robot.parameters.gravity)
     return generalized
-

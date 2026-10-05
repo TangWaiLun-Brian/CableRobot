@@ -45,8 +45,11 @@ def _gauss_newton(
     damping: float = 1e-8,
 ) -> KinematicSolverResult:
     q = np.asarray(q0, dtype=float).copy()
-    if tolerance <= 0.0 or max_iterations < 0 or damping <= 0.0:
-        raise ValueError("solver tolerance/damping must be positive and iterations nonnegative")
+    if (not np.isfinite(tolerance) or tolerance <= 0.0
+            or not np.isfinite(damping) or damping <= 0.0
+            or isinstance(max_iterations, bool) or not isinstance(max_iterations, (int, np.integer))
+            or max_iterations < 0):
+        raise ValueError("solver tolerance/damping must be positive and finite; iterations must be a nonnegative integer")
     for iteration in range(max_iterations + 1):
         r = residual(q)
         norm = float(np.linalg.norm(r))
@@ -104,8 +107,8 @@ def solve_frame_position(
 
     target = np.asarray(desired_position, dtype=float)
     robot.validate_state(initial_state)
-    if target.shape != (3,):
-        raise ValueError("desired_position must have shape (3,)")
+    if target.shape != (3,) or not np.all(np.isfinite(target)):
+        raise ValueError("desired_position must be finite and have shape (3,)")
     return _gauss_newton(lambda q: frame_position(robot, frame, RobotState(q)) - target, initial_state.q, **solver_options)
 
 

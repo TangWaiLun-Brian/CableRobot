@@ -29,7 +29,7 @@ class KinematicTrajectory:
             raise ValueError("q and qd must have shape (sample_count, dof)")
         if not all(np.all(np.isfinite(array)) for array in (times, q, qd)):
             raise ValueError("trajectory samples must be finite")
-        if not np.isclose(times[0], 0.0) or not np.allclose(np.diff(times), 1.0 / self.fps):
+        if not np.isclose(times[0], 0.0, atol=1e-12, rtol=0) or not np.allclose(np.diff(times), 1.0 / self.fps, atol=1e-12, rtol=0):
             raise ValueError("times must start at zero and advance uniformly by 1/fps")
         for name, value in (("times", times), ("q", q), ("qd", qd)):
             value.setflags(write=False)
@@ -63,7 +63,7 @@ def sinusoidal_trajectory(robot, initial_state: RobotState, amplitudes: ArrayLik
     if not np.isfinite(duration) or duration <= 0 or not np.isfinite(fps) or fps <= 0:
         raise ValueError("duration and fps must be positive and finite")
     frame_count = int(round(duration * fps))
-    if frame_count < 2 or not np.isclose(frame_count, duration * fps):
+    if frame_count < 2 or not np.isclose(frame_count, duration * fps, atol=1e-9, rtol=0):
         raise ValueError("duration * fps must be an integer of at least two frames")
     times = np.arange(frame_count, dtype=float) / fps
     omega = 2 * np.pi / duration

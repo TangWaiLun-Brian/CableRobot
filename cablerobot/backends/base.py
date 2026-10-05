@@ -29,4 +29,3 @@ class AnalysisBackend(Protocol):
 
     def solve_tension_problem(self, problem: TensionProblem) -> TensionAllocationResult:
         ...
-

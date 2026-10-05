@@ -71,15 +71,46 @@ class CableRobot:
         return RobotState(np.zeros(self.dof))
 
     def validate_state(self, state: RobotState) -> None:
-        if state.q.shape != (self.dof,):
-            raise ValueError(f"state has {state.q.size} coordinates; robot requires {self.dof}")
+        for name in ("q", "qd"):
+            value = np.asarray(getattr(state, name), dtype=float)
+            if value.shape != (self.dof,) or not np.all(np.isfinite(value)):
+                raise ValueError(f"state.{name} must be finite with shape ({self.dof},); robot requires {self.dof} coordinates")
 
     def validate(self) -> None:
         if not self.bodies:
             raise ValueError("robot has no bodies")
+        for name, body in self.bodies.items():
+            if name != body.name or not isinstance(body.fixed, bool):
+                raise ValueError("body dictionary keys must match names; fixed must be boolean")
+            frame = self.frames.get(name)
+            if (frame is None or frame.body != name or np.shape(frame.T_body_frame) != (4, 4)
+                    or not np.allclose(frame.T_body_frame, np.eye(4), atol=1e-12, rtol=0)):
+                raise ValueError("same-named body frames must remain identity on their own body; add a separate offset frame")
+        for name, frame in self.frames.items():
+            if name != frame.name or frame.body not in self.bodies:
+                raise ValueError("frame dictionary keys must match names and reference known bodies")
+        joint_names, children = set(), set()
+        coordinate_start = 0
+        for joint in self.joints:
+            if joint.name in joint_names or joint.child in children:
+                raise ValueError("joint names and child bodies must be unique")
+            if joint.parent not in self.bodies or joint.child not in self.bodies or joint.parent == joint.child:
+                raise ValueError("joint must reference distinct known parent and child bodies")
+            if joint.q_start != coordinate_start:
+                raise ValueError("joint coordinate blocks must follow insertion order; do not reorder joints directly")
+            joint_names.add(joint.name)
+            children.add(joint.child)
+            coordinate_start += joint.dof
+        cable_names = set()
+        for cable in self.cables:
+            if cable.name in cable_names:
+                raise ValueError("cable names must be unique")
+            cable_names.add(cable.name)
+            if len(cable.route.points) < 2 or any(point.frame not in self.frames for point in cable.route.points):
+                raise ValueError("cable routes require at least two points on known frames")
+            cable.validate()
         if any(name not in self.frames for name in self.analysis_frames):
             raise ValueError("analysis_frames references an unknown frame")
-        children = {joint.child for joint in self.joints}
         roots = [name for name in self.bodies if name not in children]
         if not roots:
             raise ValueError("multibody graph has no root")

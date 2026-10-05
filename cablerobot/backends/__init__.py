@@ -7,9 +7,10 @@ def get_backend(name: str) -> AnalysisBackend:
     if name == "numpy":
         return NumPyBackend()
     if name == "matlab":
-        return MatlabBackend()
+        backend = MatlabBackend()
+        backend.require_solver()
+        return backend
     raise ValueError(f"unknown backend {name!r}")
 
 
 __all__ = ["AnalysisBackend", "BackendUnavailableError", "MatlabBackend", "NumPyBackend", "TensionProblem", "get_backend"]
-
