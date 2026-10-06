@@ -409,7 +409,16 @@ If something was not run, say so.
 
 Do not copy the whole repository.
 
-Include only files that are particularly useful for external architectural or mathematical review.
+Choose the smallest set of canonical source, test, and documentation files
+necessary to audit the milestone's highest-risk mathematical and architectural
+changes. Tie selection to the decisions and questions in `architecture_changes.md`
+and `review_summary.md`, rather than copying every changed file.
+
+When an external reviewer **cannot access the repository**, copy that selected
+set into `.review/key_files/`. Local path references alone are not an adequate
+handoff. Include only the supporting context necessary to understand the risks;
+do not recursively copy all dependencies or turn the subset into a repository
+mirror.
 
 Typical candidates include:
 
@@ -422,9 +431,44 @@ Typical candidates include:
 - convention documentation;
 - important new tests.
 
-If the repository is still small, this directory may be unnecessary.
+For example, a force-allocation and validation review might include:
 
-Prefer referencing paths in the actual repository over duplicating many unchanged files.
+```text
+key_files/
+├── README.md
+├── allocation_tension.py
+├── equilibrium.py
+├── jacobians.py
+├── test_statics.py
+├── test_review_regressions.py
+└── conventions.md
+```
+
+This is illustrative, not a required checklist for every milestone. A different
+risk profile requires a different selection.
+
+Preserve each copied file byte-for-byte from the canonical file at the recorded
+review Git reference. Do not rewrite, summarize, or modify source/test copies.
+When flattening paths, use unambiguous filenames such as `allocation_tension.py`
+for `cablerobot/allocation/tension.py`; never overwrite two files with the same
+basename.
+
+Include a small `key_files/README.md` index recording, for each copy:
+
+- review-package filename;
+- canonical repository-relative path;
+- audited Git reference;
+- SHA256 of the copied bytes;
+- reason for inclusion and associated mathematical or architectural risk.
+
+Verify the copies match the recorded canonical revision. State explicitly if the
+selected subset is not independently runnable; do not claim it reproduces the
+full test suite without the remaining repository and dependencies.
+
+When the reviewer **can access the recorded repository revision**, a path-based
+index may suffice and unnecessary copies should be avoided. Neither access mode
+permits copying the entire repository. Keep copied review files temporary and
+gitignored, just like the rest of `.review/`.
 
 ---
 
@@ -661,7 +705,9 @@ As the repository grows, avoid repeatedly creating full repository copies.
 For external review:
 
 - prefer summaries and changed-file lists;
-- provide selected key files;
+- provide selected canonical key-file copies when the reviewer cannot access
+  the repository, with provenance as specified in section 12; otherwise a
+  path-based index may suffice;
 - use Git to identify changes;
 - avoid including datasets, environments, generated simulations, videos, plots, binary outputs, caches, or Git history unless specifically required.
 

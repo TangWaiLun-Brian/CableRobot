@@ -48,8 +48,13 @@ repository currently has no configured remote. MP4 and MATLAB are not CI prerequ
 Commit coherent source/test/documentation changes. Generate the small ignored
 `.review/` package prescribed by the workflow, including base/current Git refs,
 Git-derived changed paths, architecture rationale, actual tests/examples,
-limitations and questions. Reference key canonical files instead of duplicating
-the repository. Do not commit caches, review logs, environments or generated media.
+limitations and questions. If the reviewer cannot access the repository, copy
+only the canonical source/test/documentation files needed to audit the highest-risk
+changes into `.review/key_files/`, with an index of canonical paths, Git references,
+SHA256 hashes and inclusion reasons. Preserve the canonical bytes and avoid filename
+collisions. A path-based index may suffice for reviewers with repository access.
+Never copy the whole repository or imply the subset is independently runnable.
+Do not commit caches, review logs, environments, copied review files or generated media.
 
 Stop at **IMPLEMENTED — AWAITING REVIEW**. After external feedback is evaluated
 and accepted corrections pass tests/examples, record the accepted milestone in

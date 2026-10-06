@@ -58,6 +58,22 @@ Keep `.review/` temporary and gitignored.
 
 Do not copy the entire repository into `.review/`.
 
+For an external reviewer who cannot access the repository:
+
+- Copy only the canonical source, test, and documentation files necessary to
+  audit the milestone's highest-risk mathematical and architectural changes
+  into `.review/key_files/`; local path references alone are not sufficient.
+- Select files for the current review risks, not every changed file or a fixed
+  checklist. Include supporting context only when necessary for the audit.
+- Keep copies identical to the canonical files at the recorded review Git
+  reference. Use unambiguous review filenames when flattening paths.
+- Include a small index mapping each copy to its canonical path, Git reference,
+  SHA256, and reason for inclusion. Do not imply a selected subset is a runnable
+  standalone repository.
+
+When the reviewer can access the recorded repository revision, a path-based
+index may suffice. In either case, keep the package small, temporary, and ignored.
+
 ## After review
 
 - Evaluate review recommendations rather than blindly applying them.
