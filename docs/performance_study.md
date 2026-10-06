@@ -50,6 +50,8 @@ logging/OS jitter. Report mean/median/p95/max, overruns and limitations honestly
 ordinary Python tests do not establish hard-real-time behavior. MATLAB stays a stub,
 not a per-frame migration. Final targeted/full tests and actual benchmark evidence
 must precede an IMPLEMENTED — AWAITING REVIEW handoff, with selected canonical files.
+Current status: **IMPLEMENTED — AWAITING REVIEW**. See `performance_results.md` for
+actual before/after timings, correctness comparisons, profiler counts and limitations.
 
 ## Decision recorded after baseline profiling, before core changes
 
@@ -116,3 +118,31 @@ multiple roots, arbitrary/reversed/on-robot routes, virtual work, gravity/refere
 equivalence, FK recovery/singularity/failure and reference-objective/status parity.
 Keep every existing test and tolerance, and reprofile after the change before doing
 any further optimization.
+
+## Implemented compatibility and execution notes
+
+The selected FK optimization memoizes only the length residual at the last q within
+one solve. It preserves existing public cable-length/Jacobian callbacks; no fused
+private FK geometry path or persistent cache was necessary to meet the numerical
+budget. Analytic Jacobian construction naturally computes segment lengths along
+with derivatives; profiler counts include those coupled evaluations rather than
+misrepresenting a reduced number of public calls as all geometry computations.
+
+The sample's Downloads file remains unchanged (SHA256
+`DE6CFA36C9703BF7A8FB8575AE435DF11D76B7DB6FEAB49B17A7D79A4DEB2B09`).
+It was inspected, not executed or copied wholesale. The benchmark adapts its geometry,
+sampling and previous-success warm-start pattern. No sample workflow changes are
+needed to benefit from the optimized package.
+
+The base Anaconda interpreter could not import cablerobot when checked from Downloads
+(`ModuleNotFoundError`), although source-root benchmark imports work. Running an
+external script requires an installation in the SAME interpreter/environment used to
+execute it. For example, from the repository root in the intended environment:
+
+```powershell
+python -m pip install -e . --no-deps --no-build-isolation
+```
+
+This assumes the declared build/runtime dependencies are already installed. No global
+installation or system dependency modification was performed by the study. Dedicated
+installed-wheel verification is separate from the user's execution environment.

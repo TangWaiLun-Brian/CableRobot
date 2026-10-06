@@ -92,9 +92,20 @@ Do not confuse this objective with cable strain energy or stiffness shaping.
 
 ## Numerical conventions
 
-The reference Jacobian uses a centered step of `1e-6` in each coordinate, configurable
+Default cable/point derivatives are analytic for all currently supported tree/forest
+joints and straight routes through body-fixed points. Floating angular derivatives
+use the SO(3) left Jacobian of Exp(rotvec); generalized rates/signs do not change.
+Each segment contributes `unit_direction.T @ (J_next-J_previous)` to dl/dq.
+See `performance_study.md` for the derivation and validated scope.
+
+The retained finite-difference reference uses a centered step of `1e-6` in each coordinate, configurable
 through `RobotParameters`. This mixes metres and radians by coordinate type. Tests
 compare to independent analytic or five-point results with explicit tolerances.
+Select `method='finite_difference'` explicitly; supplying a low-level `step` also
+selects the reference. An explicit analytic method with a step is rejected.
+`solve_configuration_from_lengths(..., jacobian_method='finite_difference')` and
+`gravity_generalized_force(..., jacobian_method='finite_difference')` retain reference
+derivatives; default FK warm-start/residual tolerances and gravity semantics are unchanged.
 Zero-length segments are accepted for length reporting but rejected for direction,
 Jacobian and wrench computations. Local solvers use damped Gauss-Newton with
 backtracking. Pose rotation weight has units metres per radian relative to translation.

@@ -13,6 +13,8 @@ Milestone 1 is **COMPLETED — ACCEPTED FOUNDATION**; see its
 Milestone 2, **Pose-Dependent Tension Allocation and Gravity Compensation**, is
 **IMPLEMENTED — AWAITING REVIEW**. See the [formulation and decisions](docs/tension_allocation.md)
 and the temporary `.review/review_summary.md` handoff. No later milestone has begun.
+The separately authorized [performance study](docs/performance_results.md) is also
+**IMPLEMENTED — AWAITING REVIEW**; it preserves Milestone 2's pending review package.
 Read [contribution instructions](CONTRIBUTING.md) and the required
 [development workflow](docs/development_workflow.md) before changing it.
 
@@ -30,6 +32,7 @@ python examples/spatial_cdpr.py --output examples/output/cdpr.png
 python examples/serial_robot.py --output examples/output/serial.png
 python -m examples.animate_robots --duration 5 --fps 20 --format gif
 python -m examples.equilibrium_allocation --output-dir examples/output/equilibrium
+python -m benchmarks.control_pipeline --output-dir examples/output/performance/study
 ```
 
 Omit `--output` to open an interactive Matplotlib figure. For headless environments,
@@ -76,7 +79,11 @@ versioned JSON with `cablerobot.io.save_robot` and `load_robot`.
 - Sampled periodic kinematic trajectories and synchronized spatial/serial/hybrid GIF or MP4 animations.
 - NumPy backend and lazy MATLAB availability detection with explicit stub errors.
 
-Jacobians use centralized numerical differentiation in this reference release.
+Cable and point Jacobians now use generic analytic derivatives for the supported
+straight, body-fixed routes and fixed/revolute/prismatic/floating tree joints.
+Centralized finite differences remain an explicit validation/reference path:
+`robot.cable_jacobian(state, method="finite_difference")`; a supplied low-level
+`step` retains numerical differentiation. See the [derivation/compatibility decisions](docs/performance_study.md).
 Local kinematic solvers require a reasonable initial guess and do not resolve global
 ambiguity. Degenerate zero-length segments have no differentiable cable direction.
 The foundation `allocate_tensions`/`solve_tension_allocation` remain unchanged.
@@ -111,6 +118,7 @@ motors, flexible links, closed kinematic loops and hardware communication are de
 - [Architecture and milestone boundaries](docs/architecture.md)
 - [Numerical backends and MATLAB boundary](docs/backends.md)
 - [Pose-dependent tension allocation](docs/tension_allocation.md)
+- [Computational performance study and measured results](docs/performance_results.md)
 - [Validation report](docs/validation.md)
 - [Serial/hybrid cable routing and animations](docs/routing_animation.md)
 - [Review correction decisions](docs/review_corrections.md)

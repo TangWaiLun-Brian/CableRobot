@@ -2,6 +2,10 @@
 
 Milestone 2 implementation plan, recorded before source changes on 2026-10-06.
 Status: **IMPLEMENTED — AWAITING REVIEW**. The accepted `milestone-1` boundary is unchanged.
+This records the original Milestone 2 review at `d5b733d`. A separately authorized
+[performance study](performance_study.md) later improves derivative/geometry evaluation,
+without changing either allocator algorithm or physical conventions. Historical
+timings/residuals below are not replaced by the later [performance results](performance_results.md).
 
 ## Decision: an additive reference-tension API
 

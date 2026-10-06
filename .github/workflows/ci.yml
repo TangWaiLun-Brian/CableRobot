@@ -38,6 +38,8 @@ jobs:
         run: python -m examples.serial_robot --output examples/output/serial.png
       - name: Pose-dependent equilibrium allocation
         run: python -m examples.equilibrium_allocation --samples 9 --output-dir examples/output/equilibrium
+      - name: Pipeline benchmark correctness smoke (no timing threshold)
+        run: python -m benchmarks.control_pipeline --frames 20 --repeats 1 --profile-frames 3 --output-dir examples/output/performance/ci
       - name: Short three-topology GIF smoke test
         run: python -m examples.animate_robots --duration 0.3 --fps 10 --format gif --output-dir examples/output/ci
       - name: Build wheel

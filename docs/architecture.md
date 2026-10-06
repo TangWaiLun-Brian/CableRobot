@@ -9,6 +9,11 @@ changes. Model topology, state ordering and force signs are unchanged.
 Milestone 2 is **IMPLEMENTED — AWAITING REVIEW**. Its additive allocation API and
 numerical decisions were [documented before implementation](tension_allocation.md).
 It reuses the foundation geometry, Jacobians, B and gravity without modification.
+That statement describes its original reviewed revision `d5b733d`. The subsequently
+authorized [computational study](performance_study.md), also awaiting review,
+preserves model semantics but makes analytic derivatives the default and adds
+validated call-local geometry reuse. Its [measured results](performance_results.md)
+are distinct from Milestone 2 acceptance; neither pending task is accepted yet.
 
 `CableRobot` owns bodies, joints, frames, routes, physical parameters and coordinate
 ordering. Topology is a directed tree or forest with one parent per non-root body.
@@ -84,7 +89,9 @@ The suggested subsystem layout is retained. `model/transforms.py` centralizes SE
 utilities and `cablerobot/examples.py` holds reusable model constructors. Analytic
 joint Jacobians and automatic differentiation are deferred in favor of a single
 topology-independent numerical reference, validated against physical invariants.
-No SciPy dependency is introduced. Exhaustive active sets are capped at eight cables
+The later performance study retains this centralized finite-difference path as an
+explicit reference while adding generic analytic cable/point derivatives. No SciPy
+dependency is introduced. Exhaustive active sets are capped at eight cables
 to keep the reference allocator small and predictable; larger cases explicitly
 expose convergence uncertainty through result status.
 
