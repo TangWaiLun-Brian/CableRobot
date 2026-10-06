@@ -193,6 +193,21 @@ cases: targeted 239 passed/13.29 s; full 266 passed/16.83 s, warnings as errors,
 zero failed/skipped/warnings reported. Relevant spatial/serial/equilibrium examples
 exit 0; all 81 regression sweep poses feasible, maximum residual 4.40036e-13.
 
+Offline installed-wheel verification also passes the full suite: 266 passed in
+16.45 s, warnings as errors, from a separate directory without the checkout's
+cablerobot package. Import provenance resolves to the dedicated verification
+venv's site-packages. Wheel built at documentation revision 0c13f17, SHA256
+2fbc1185255291e0045716de75916850f91cbb16e2e23bf928cfcc57bb38a6f2.
+The venv inherits existing NumPy/Matplotlib through system-site-packages; its
+pip check reports an unrelated inherited datashader 0.19.1 -> missing numba
+dependency. Cablerobot imports/tests pass; that unrelated environment issue was
+not repaired or hidden. The user's global environment was not changed.
+
+The new 20-frame CI benchmark command was also run locally: both workloads have
+20/20 feasible Mode A, converged FK and feasible Mode B. It is a correctness smoke
+run, not part of the primary 500-frame performance comparison; no host-dependent
+timing threshold is asserted. The hosted OS/Python matrix has not been run here.
+
 Pending review questions: derivative propagation/rotvec convention and unsupported
 contact boundary; default analytic compatibility/reference selectors; benchmark
 latency boundaries/profiler accounting; whether noisy/loaded-machine validation
@@ -200,4 +215,3 @@ should be required before any hardware-control decision. MATLAB remains optional
 and unimplemented, not justified as a first performance fix by the measured results.
 No physical milestone, dynamics, friction, sag/elasticity, stiffness/manipulability,
 sensors/drivers or hardware control is added. No acceptance tag is created.
-
