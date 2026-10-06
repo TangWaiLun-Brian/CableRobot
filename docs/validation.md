@@ -4,6 +4,8 @@ This document preserves historical validation evidence. The accepted foundation
 and routed-animation milestone, current closure results and Git boundary are
 recorded in [milestone_01_foundation.md](milestones/milestone_01_foundation.md).
 Historical counts below are not the current full-suite count.
+Milestone 2 allocation validation is documented in [tension_allocation.md](tension_allocation.md)
+and its temporary review package. This page's earlier results remain historical.
 
 Validated on 2026-09-30. The standalone repository is delivered at
 `C:\Users\thisi\OneDrive\Desktop\CableRobot`.

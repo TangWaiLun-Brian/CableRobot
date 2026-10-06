@@ -76,10 +76,19 @@ Static equilibrium is `B @ tensions + tau_gravity + external_load = 0`.
 generalized force; use `include_gravity=False` if it already includes gravity.
 The low-level `allocate_tensions` instead accepts a **required** generalized force,
 and solves `B @ tensions = target` within unilateral bounds.
-This is bounded static-equilibrium allocation. The current reference numerical
+This is the foundation bounded static-equilibrium allocation. Its reference numerical
 implementation does not expose a configurable `t_ref` or minimize a user-specified
 `||t - t_ref||_2^2` objective; its existing internal solution-selection criteria
-are not a reference-tension control interface.
+are not a reference-tension control interface. These APIs are retained unchanged.
+
+Milestone 2 adds `solve_equilibrium_tensions`, with the same gravity/load signs,
+and low-level `allocate_reference_tensions` with the same REQUIRED-force target.
+They minimize `0.5 * ||W(t-t_ref)||^2` under FULL generalized equilibrium and bounds.
+References are finite nonnegative scalar/per-cable tensions (N), in insertion order;
+default zero. W is diagonal with strictly positive finite scalar/per-cable weights,
+default identity. Inputs supply diagonal W, not W squared. Weights are relative,
+dimensionless penalties. References may be outside bounds without changing bounds.
+Do not confuse this objective with cable strain energy or stiffness shaping.
 
 ## Numerical conventions
 
@@ -101,3 +110,14 @@ iteration-limited solve without either a feasible witness or separation is
 numerically unresolved, including small problems when conditioning prevents proof.
 Numerical linear-algebra failure is distinguished separately. Do not interpret an
 unresolved result as proof that no physical equilibrium exists.
+
+The Milestone 2 dual solver additionally verifies the numerical reference-objective
+condition `abs(lambda @ residual) <= tolerance * (1 + objective_value)`, with
+`t = clip(t_ref + B.T @ lambda / weights**2, lower, upper)` satisfying projected
+stationarity. This pairing is a numerical dual-gap diagnostic, not a proof of exact
+optimality with inexact equilibrium. Final residuals always use the original full B.
+An independently feasible foundation fallback is unresolved for the new objective.
+Only new results with status `feasible` expose a `tension_command`; other tensions
+are diagnostic candidates. Activity masks use `tolerance * (1 + abs(t_i))` N;
+reserves are `t-lower` and `upper-t` in N, +infinity for an unbounded upper reserve.
+See `tension_allocation.md` for algorithm, limitations and control boundaries.

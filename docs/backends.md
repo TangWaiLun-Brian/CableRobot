@@ -9,6 +9,15 @@ to the bounded-equilibrium/reference numerical allocation implementation. Here
 nor the public allocator exposes `t_ref` or a configurable reference-tension
 tracking objective.
 
+Milestone 2's separate `allocate_reference_tensions` numerical API and
+`solve_equilibrium_tensions` robot wrapper DO expose the reference objective. They
+are NumPy-only and return the explicit `numpy-dual-newton` solver identity with
+iterations, numerical dual diagnostics and richer result fields. The foundation
+`TensionProblem` and structural protocol are intentionally unchanged. There is no
+MATLAB reference-objective method or backend-selection argument on the new API.
+See [the architecture decision](tension_allocation.md); adding a cross-backend QP
+contract is deferred pending review and validated adapter implementations.
+
 `MatlabBackend` is an intentional optional stub. Availability is checked lazily with
 `importlib` and no MATLAB engine is imported at package import time. An absent engine
 raises `BackendUnavailableError` with an installation explanation. A detected engine

@@ -1,10 +1,14 @@
-# Architecture and first milestone
+# Architecture and milestone boundaries
 
 Review status: **COMPLETED — ACCEPTED FOUNDATION**. See the
 [accepted milestone record](milestones/milestone_01_foundation.md) and
 [review correction decisions](review_corrections.md) for the rationale and
 compatibility consequences of the current hardening, recorded before its code
 changes. Model topology, state ordering and force signs are unchanged.
+
+Milestone 2 is **IMPLEMENTED — AWAITING REVIEW**. Its additive allocation API and
+numerical decisions were [documented before implementation](tension_allocation.md).
+It reuses the foundation geometry, Jacobians, B and gravity without modification.
 
 `CableRobot` owns bodies, joints, frames, routes, physical parameters and coordinate
 ordering. Topology is a directed tree or forest with one parent per non-root body.
@@ -24,11 +28,20 @@ The allocator consumes numerical arrays only and does not own any geometry.
 It is a bounded static-equilibrium/reference numerical implementation. Small
 problems enumerate active sets and compare residual norm, then tension norm,
 using the existing internal criteria; larger problems use projected least squares.
-There is no user-configurable reference-tension vector or `||t - t_ref||_2^2`
-objective. This numerical baseline remains available for regression and validation;
-reference/pretension tracking belongs to a future, separately authorized milestone.
+That foundation allocator has no user-configurable reference-tension objective.
+It remains available unchanged for regression and validation.
 Python converts an analysis request to `TensionProblem`, a selected backend computes
 a `TensionAllocationResult`, and Python presents or plots the result.
+
+Milestone 2 adds `allocation/reference.py`: a strictly convex reference-tension QP
+on numerical arrays, and a thin robot-facing wrapper that forms the full target.
+It returns `EquilibriumTensionResult`, an additive richer result type. The NumPy
+dual solver uses free-column SVD and directional searches; the old allocator supplies
+fallback witnesses/separating certificates, never unverified secondary optima.
+Existing `AnalysisBackend`/`TensionProblem` contracts remain unchanged. The new API
+identifies its NumPy solver explicitly; no MATLAB QP or silently selected backend
+is implied. No new dependency, topology change, hardware loop, dynamics, or
+continuity regularizer is introduced.
 
 ## Implemented abstractions
 
@@ -75,9 +88,8 @@ No SciPy dependency is introduced. Exhaustive active sets are capped at eight ca
 to keep the reference allocator small and predictable; larger cases explicitly
 expose convergence uncertainty through result status.
 
-The next milestone should be chosen after reviewing the public model, signs, tests,
-allocation behavior and optional backend boundary. Hardware communication is outside
-this foundation.
+No later milestone begins until Milestone 2 external review is resolved. Hardware
+communication remains outside the current implementation.
 
 ## Routing animation extension
 
