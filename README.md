@@ -8,8 +8,10 @@ Milestone 1 uses massless, straight, tension-only cable segments. Python owns ro
 topology and semantics. NumPy is the working numerical backend; MATLAB is an optional
 adapter boundary.
 
-Status: **IMPLEMENTED — AWAITING REVIEW**. The foundation and routed-animation
-implementation is awaiting external acceptance; no next milestone has begun.
+Status: **COMPLETED — ACCEPTED FOUNDATION**. The foundation and routed-animation
+milestone was accepted after its documentation amendment. See the
+[permanent milestone record](docs/milestones/milestone_01_foundation.md).
+No next milestone has begun.
 Read [contribution instructions](CONTRIBUTING.md) and the required
 [development workflow](docs/development_workflow.md) before changing it.
 
@@ -81,6 +83,10 @@ Infeasibility requires a separating certificate; a stalled iteration is not proo
 that equilibrium is impossible.
 The reference allocator prioritizes feasibility, with no guarantee of a preferred
 minimum-norm or energy-optimal tension distribution. See the documented tolerances.
+It is a **bounded equilibrium / reference numerical allocator**: "reference" means
+a numerical baseline for validation, not tracking a reference tension vector.
+Neither the public allocator nor its backend problem exposes a configurable
+`t_ref` objective such as minimizing `||t - t_ref||_2^2`; that remains future work.
 
 `analyze_wrench_workspace` currently analyzes **one configuration**, returning the
 bounded generalized-force set and optionally a feasibility result. Full workspace

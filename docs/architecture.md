@@ -1,6 +1,7 @@
 # Architecture and first milestone
 
-Review status: **IMPLEMENTED — AWAITING REVIEW**. See
+Review status: **COMPLETED — ACCEPTED FOUNDATION**. See the
+[accepted milestone record](milestones/milestone_01_foundation.md) and
 [review correction decisions](review_corrections.md) for the rationale and
 compatibility consequences of the current hardening, recorded before its code
 changes. Model topology, state ordering and force signs are unchanged.
@@ -20,6 +21,12 @@ RobotState.q -> body/frame transforms -> world route points -> cable lengths
 
 Nonlinear solvers consume these maps. Statics uses COM point Jacobians and B.
 The allocator consumes numerical arrays only and does not own any geometry.
+It is a bounded static-equilibrium/reference numerical implementation. Small
+problems enumerate active sets and compare residual norm, then tension norm,
+using the existing internal criteria; larger problems use projected least squares.
+There is no user-configurable reference-tension vector or `||t - t_ref||_2^2`
+objective. This numerical baseline remains available for regression and validation;
+reference/pretension tracking belongs to a future, separately authorized milestone.
 Python converts an analysis request to `TensionProblem`, a selected backend computes
 a `TensionAllocationResult`, and Python presents or plots the result.
 

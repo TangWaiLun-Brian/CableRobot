@@ -76,6 +76,10 @@ Static equilibrium is `B @ tensions + tau_gravity + external_load = 0`.
 generalized force; use `include_gravity=False` if it already includes gravity.
 The low-level `allocate_tensions` instead accepts a **required** generalized force,
 and solves `B @ tensions = target` within unilateral bounds.
+This is bounded static-equilibrium allocation. The current reference numerical
+implementation does not expose a configurable `t_ref` or minimize a user-specified
+`||t - t_ref||_2^2` objective; its existing internal solution-selection criteria
+are not a reference-tension control interface.
 
 ## Numerical conventions
 

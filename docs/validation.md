@@ -1,9 +1,9 @@
 # Milestone 1 validation report
 
-This document preserves historical validation evidence; it is not an accepted
-milestone record. The current foundation/routed-animation scope is
-**IMPLEMENTED — AWAITING REVIEW**. See `.review/` for the current handoff and
-`docs/milestones/README.md` for the acceptance-record procedure.
+This document preserves historical validation evidence. The accepted foundation
+and routed-animation milestone, current closure results and Git boundary are
+recorded in [milestone_01_foundation.md](milestones/milestone_01_foundation.md).
+Historical counts below are not the current full-suite count.
 
 Validated on 2026-09-30. The standalone repository is delivered at
 `C:\Users\thisi\OneDrive\Desktop\CableRobot`.
@@ -140,6 +140,9 @@ reusable example constructors. Reference Jacobians use centralized finite differ
 rather than specialized geometry paths. The dependency baseline has no SciPy.
 Small bounded allocation exhaustively searches active sets for at most eight cables;
 larger problems use projected least squares with explicit convergence uncertainty.
+This is a bounded-equilibrium/reference numerical allocator: "reference" denotes
+a validation baseline, not a configurable `t_ref` objective. Reference/pretension
+tracking is not a foundation capability.
 Kinematic solves are local and require reasonable initial guesses. The workspace
 entry point currently reports one configuration, not a full workspace grid.
 

@@ -3,7 +3,11 @@
 Python owns topology, models, validation, serialization, public result dataclasses
 and visualization. `AnalysisBackend` is a structural protocol with a name and
 `solve_tension_problem(TensionProblem)` method. The working `NumPyBackend` delegates
-to the reference allocation implementation.
+to the bounded-equilibrium/reference numerical allocation implementation. Here
+"reference" means a validation baseline, not a reference tension vector.
+`TensionProblem.target` is a required generalized force; neither this structure
+nor the public allocator exposes `t_ref` or a configurable reference-tension
+tracking objective.
 
 `MatlabBackend` is an intentional optional stub. Availability is checked lazily with
 `importlib` and no MATLAB engine is imported at package import time. An absent engine

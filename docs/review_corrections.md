@@ -1,7 +1,9 @@
 # Foundation review corrections
 
-Status: implemented corrections within the current foundation and routed-animation
-scope, **IMPLEMENTED — AWAITING REVIEW**; external acceptance is still required.
+Status: **COMPLETED — ACCEPTED FOUNDATION**, after the external review's minor
+documentation amendment. This document retains the decisions recorded before the
+earlier hardening; final acceptance and validation are in the
+[permanent milestone record](milestones/milestone_01_foundation.md).
 
 Starting reference: `7683e77961284f62b9d4f2d19c45bd0b6a6a7715` (the preserved
 pre-review repository). No earlier commits or accepted milestone records existed.
@@ -71,7 +73,11 @@ The final handoff must record actual commands, results, Git references and revie
 questions. Stricter rejection of previously invalid input and unrepresentable
 GIF frame rates is intentional; valid default examples keep their APIs.
 
-## Questions reserved for external review
+## Questions raised for external review
+
+The external review accepted the foundation without a blocking architectural or
+mathematical defect. These questions remain future design considerations, not
+unresolved acceptance blockers.
 
 - Is conservative residual-direction separation sufficient for this reference
   allocator, or should a later milestone add a better-conditioned certified
@@ -82,3 +88,12 @@ GIF frame rates is intentional; valid default examples keep their APIs.
   snapshots? This correction only validates current contracts.
 - Built-in multibody dynamics, pulley wraps/friction/contact, continuous workspace
   certification and hardware remain deferred; these are not review fixes.
+
+## Accepted minor amendment — 2026-10-06
+
+Clarified "reference allocator" as a bounded-equilibrium/reference numerical
+implementation, not user-configurable reference-tension tracking. Source/API
+inspection confirmed neither allocator nor TensionProblem exposes `t_ref`.
+Documentation alone was amended; allocator paths, numerical criteria, tests and
+tolerances were preserved. Configurable `||t - t_ref||_2^2` allocation and associated
+control work remain deferred. No Milestone 2 functionality was introduced.

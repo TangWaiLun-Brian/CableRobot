@@ -82,7 +82,8 @@ Colors identify attachment topology rather than computed tension.
 
 The original routing expansion passed **87 tests in 5.64 seconds** on Python 3.12.13.
 This is historical validation, not external milestone acceptance. Current correction
-results belong in the pending `.review/` handoff until acceptance. Those original tests
+and closure results are in the
+[accepted foundation record](milestones/milestone_01_foundation.md). Those original tests
 cover both route classes, guide motion, summed segment lengths, shared-motion
 invariance, articulation response, same-body routing, Jacobian directional checks,
 virtual work, intermediate-guide body wrench contributions and JSON round trips.
