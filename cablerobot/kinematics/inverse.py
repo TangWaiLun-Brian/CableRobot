@@ -80,18 +80,40 @@ def solve_configuration_from_lengths(
     robot: "CableRobot",
     measured_lengths: ArrayLike,
     initial_state: RobotState,
+    *,
+    jacobian_method: str | None = None,
     **solver_options: object,
 ) -> KinematicSolverResult:
+    from .jacobians import _method
+
+    _method(jacobian_method, None)
     target = np.asarray(measured_lengths, dtype=float)
     robot.validate_state(initial_state)
     if target.shape != (robot.cable_count,):
         raise ValueError("measured_lengths has the wrong shape")
     if not np.all(np.isfinite(target)) or np.any(target < 0.0):
         raise ValueError("measured lengths must be finite and nonnegative")
+    cached_q, cached_residual = None, None
+
+    def residual(q):
+        # The accepted line-search trial is checked again on the next iteration.
+        # Memoize only within this solve; preserve public geometry callbacks and
+        # fresh validation across calls on mutable models.
+        nonlocal cached_q, cached_residual
+        if cached_q is None or not np.array_equal(q, cached_q):
+            cached_residual = robot.cable_lengths(RobotState(q)) - target
+            cached_q = q.copy()
+        return cached_residual
+
+    def jacobian(q):
+        state = RobotState(q)
+        return (robot.cable_jacobian(state) if jacobian_method is None
+                else robot.cable_jacobian(state, method=jacobian_method))
+
     return _gauss_newton(
-        lambda q: robot.cable_lengths(RobotState(q)) - target,
+        residual,
         initial_state.q,
-        jacobian=lambda q: robot.cable_jacobian(RobotState(q)),
+        jacobian=jacobian,
         **solver_options,
     )
 

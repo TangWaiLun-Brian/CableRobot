@@ -50,3 +50,69 @@ logging/OS jitter. Report mean/median/p95/max, overruns and limitations honestly
 ordinary Python tests do not establish hard-real-time behavior. MATLAB stays a stub,
 not a per-frame migration. Final targeted/full tests and actual benchmark evidence
 must precede an IMPLEMENTED — AWAITING REVIEW handoff, with selected canonical files.
+
+## Decision recorded after baseline profiling, before core changes
+
+Practical sample (500 frames, NumPy threads explicitly 1): mode A averages
+43.70935 ms; measured-length->FK->tension averages 139.51636 ms (p95 148.74953 ms).
+All 500 frames are feasible/converged. Separate 30-frame cProfile cumulative shares:
+FK 66.28%, Jacobian construction 85.22%, allocation wrapper 31.66%, pure QP 0.68%.
+These are nested, NOT additive. This confirms numerical Jacobians/repeated geometry
+as the dominant path, not the reference-tension optimizer or Python language itself.
+
+Previous design: each cable endpoint recomputes/validates all body transforms; cable
+Jacobians call lengths 2*dof+1 times, and COM derivatives are also finite differences.
+Local FK separately evaluates residual/Jacobian and repeats accepted trial geometry.
+
+New design: keep the body-transform equation and model ownership. A private call-local
+kinematic evaluation reuses all body/frame transforms and propagates body-origin
+linear/angular derivatives through the tree. A point derivative is
+`J_point = J_origin - skew(p_point-p_origin) J_angular`. Roots have zero derivatives.
+For a revolute joint, the world joint axis supplies angular derivative and its cross
+product with the lever arm supplies linear derivative; a prismatic joint supplies
+the world joint axis in translation. Fixed joints inherit transported parent motion.
+Floating translation columns are the pre-motion joint rotation. Floating angular
+columns are `R_world_prejoint * J_left(phi)`, NOT identity or coordinate rates
+interpreted as angular velocity. Child post-motion offsets use the moving joint
+origin, including floating translation, as the angular lever origin.
+
+For K=skew(phi), theta=||phi||:
+`J_left(phi) = I + (1-cos(theta))/theta^2 K + (theta-sin(theta))/theta^3 K^2`.
+Use series coefficients near zero to avoid cancellation. This differentiates the
+existing `R=Exp(phi)` convention; it changes neither q nor physical force signs.
+
+For each routed segment d=p_next-p_previous, unit u=d/||d||:
+`d length/dq = u.T (J_next-J_previous)`; sum all segment contributions, including
+body-fixed intermediate guides. Equal segment tensions still imply `B=-J_l.T`.
+Zero-length segments retain the existing undefined-Jacobian rejection. Support all
+existing fixed/revolute/prismatic/floating tree/forest models; do not claim closed-loop,
+contact/pulley/tangency support. Gravity reuses the same COM point derivatives.
+
+Default cable/point Jacobians become analytic. Retain the central-difference path:
+explicit `step` still selects it; add keyword method='finite_difference' or 'analytic'.
+The CableRobot cable-Jacobian convenience method gets an additive method selector.
+FK gets an additive jacobian_method selector, preserving warm starts, damping,
+backtracking, residual/iteration tolerances and statuses. A per-FK-call geometry
+cache may reuse combined lengths/Jacobian at identical q (including accepted trials),
+but no persistent cache or skipped validation across public calls on mutable models.
+Gravity gets the same explicit reference selector. Neither allocator algorithm,
+objective, status/certificate contract, backend nor JSON/model schema changes.
+
+Alternatives: only accelerate one CDPR's wrench map would violate generic routing;
+larger finite-difference steps/looser FK tolerances would trade correctness for speed;
+persistent model caches risk stale topology/attachment/state data; rewriting in
+MATLAB adds boundary overhead and lacks bottleneck evidence. No such changes.
+
+Compatibility: existing valid calls/shapes/units/signs remain; default floating-point
+values improve from finite-difference approximations, so exact historical bit patterns
+are not promised. Users explicitly supplying a step retain numerical differentiation.
+Explicit analytic method plus a finite-difference step is invalid, rather than ignored.
+New method selectors and all supported-tree analytic derivatives require external
+review before acceptance. No hard-real-time guarantee follows from this change.
+
+Tests required: many seeded spatial/serial/hybrid/offset-joint analytic-vs-independent
+five-point derivatives, nonzero/near-zero/near-pi rotvec, rotated joint frames/postoffsets,
+multiple roots, arbitrary/reversed/on-robot routes, virtual work, gravity/reference
+equivalence, FK recovery/singularity/failure and reference-objective/status parity.
+Keep every existing test and tolerance, and reprofile after the change before doing
+any further optimization.

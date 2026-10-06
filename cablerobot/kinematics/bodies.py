@@ -6,7 +6,8 @@ import numpy as np
 from numpy.typing import NDArray
 
 from cablerobot.model.state import RobotState
-from cablerobot.model.transforms import transform_point
+from cablerobot.model.transforms import skew, transform_point
+from cablerobot.model.joint import JointType
 
 if False:  # pragma: no cover - type checking without a runtime cycle
     from cablerobot.model.robot import CableRobot
@@ -52,3 +53,78 @@ def frame_position(robot: "CableRobot", frame: str, state: RobotState) -> NDArra
 
 def point_position(robot: "CableRobot", frame: str, point: NDArray[np.float64], state: RobotState) -> NDArray[np.float64]:
     return transform_point(frame_transform(robot, frame, state), point)
+
+
+def _so3_left_jacobian(rotvec):
+    """World/left-trivialized angular rate of Exp(rotvec), in joint axes."""
+    squared = float(rotvec @ rotvec)
+    if squared < 1e-8:
+        a = 0.5 - squared / 24 + squared**2 / 720
+        b = 1 / 6 - squared / 120 + squared**2 / 5040
+    else:
+        theta = np.sqrt(squared)
+        a = (1 - np.cos(theta)) / squared
+        b = (theta - np.sin(theta)) / (squared * theta)
+    cross = skew(rotvec)
+    return np.eye(3) + a * cross + b * cross @ cross
+
+
+class _KinematicsContext:
+    """Validated call-local transform/derivative reuse; never cached on a model.
+
+    Positions follow the original body_transforms exactly. Angular Jacobians map
+    coordinate rates to WORLD angular velocity, not rotation-vector rates directly.
+    """
+
+    def __init__(self, robot: "CableRobot", state: RobotState, *, derivatives=False):
+        self.robot = robot
+        self.transforms = body_transforms(robot, state)
+        self.frames = {}
+        self.linear, self.angular = {}, {}
+        if not derivatives:
+            return
+        children = {joint.child for joint in robot.joints}
+        for name in robot.bodies:
+            if name not in children:
+                self.linear[name] = np.zeros((3, robot.dof))
+                self.angular[name] = np.zeros((3, robot.dof))
+        remaining = list(robot.joints)
+        while remaining:
+            before = len(remaining)
+            for joint in remaining[:]:
+                if joint.parent not in self.linear:
+                    continue
+                parent = self.transforms[joint.parent]
+                child = self.transforms[joint.child]
+                linear = self.linear[joint.parent] - skew(child[:3, 3] - parent[:3, 3]) @ self.angular[joint.parent]
+                angular = self.angular[joint.parent].copy()
+                pre = parent @ joint.T_parent_joint
+                start = int(joint.q_start or 0)
+                if joint.joint_type is JointType.REVOLUTE:
+                    axis = pre[:3, :3] @ joint.axis
+                    angular[:, start] += axis
+                    linear[:, start] += np.cross(axis, child[:3, 3] - pre[:3, 3])
+                elif joint.joint_type is JointType.PRISMATIC:
+                    linear[:, start] += pre[:3, :3] @ joint.axis
+                elif joint.joint_type is JointType.FLOATING:
+                    q = state.q[start:start+6]
+                    axes = pre[:3, :3] @ _so3_left_jacobian(q[3:])
+                    origin = pre[:3, 3] + pre[:3, :3] @ q[:3]
+                    linear[:, start:start+3] += pre[:3, :3]
+                    linear[:, start+3:start+6] -= skew(child[:3, 3] - origin) @ axes
+                    angular[:, start+3:start+6] += axes
+                self.linear[joint.child], self.angular[joint.child] = linear, angular
+                remaining.remove(joint)
+            if len(remaining) == before:
+                raise ValueError("cannot resolve body derivatives; validate the multibody graph")
+
+    def point(self, frame, point):
+        if frame not in self.frames:
+            specification = self.robot.frames[frame]
+            self.frames[frame] = self.transforms[specification.body] @ specification.T_body_frame
+        return transform_point(self.frames[frame], point)
+
+    def point_jacobian(self, frame, point, *, position=None):
+        body = self.robot.frames[frame].body
+        position = self.point(frame, point) if position is None else position
+        return self.linear[body] - skew(position - self.transforms[body][:3, 3]) @ self.angular[body]

@@ -175,11 +175,21 @@ def _profile(function, filename):
                             ("allocation_api", "allocation/reference.py", "solve_equilibrium_tensions"),
                             ("pure_qp", "allocation/reference.py", "allocate_reference_tensions")]:
         fractions[key] = sum(r["cumulative_s"] for r in entries(file, name))/stats.total_tt if stats.total_tt else 0.
+    combined = entries("kinematics/cables.py", "_cable_lengths_and_jacobian")
+    finite_path = entries("kinematics/jacobians.py", "_finite_difference_cable_jacobian")
+    if combined or finite_path:
+        # These core paths are disjoint; don't double-count their public wrapper.
+        fractions["jacobian"] = sum(r["cumulative_s"] for r in combined + finite_path)/stats.total_tt
+    raw_length_calls = sum(r["calls"] for r in entries("kinematics/cables.py", "cable_lengths"))
+    combined_calls = sum(r["calls"] for r in combined)
+    jacobian_calls = (combined_calls + sum(r["calls"] for r in finite_path) if combined or finite_path
+                      else sum(r["calls"] for r in entries("kinematics/jacobians.py", "cable_jacobian")))
     return {"total_profiled_s": stats.total_tt, "top_cumulative": rows[:25],
             "nested_cumulative_fractions_NOT_ADDITIVE": fractions,
-            "length_evaluations": sum(r["calls"] for r in entries("kinematics/cables.py", "cable_lengths")),
-            "jacobian_evaluations": sum(r["calls"] for r in entries("kinematics/jacobians.py", "cable_jacobian")),
-            "note": "Profiling is a separate instrumented pass; not headline latency. FK and Jacobian times overlap."}
+            "length_evaluations": raw_length_calls + combined_calls,
+            "length_api_evaluations": raw_length_calls, "combined_geometry_evaluations": combined_calls,
+            "jacobian_evaluations": jacobian_calls,
+            "note": "Separate instrumented pass, not headline latency. Combined analytic geometry counts one length + Jacobian evaluation; Jacobian fraction includes that coupled geometry. FK/derivative fractions overlap."}
 
 
 def _git(arguments):

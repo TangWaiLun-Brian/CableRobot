@@ -151,10 +151,10 @@ class CableRobot:
 
         return cable_lengths(self, state)
 
-    def cable_jacobian(self, state: RobotState) -> NDArray[np.float64]:
+    def cable_jacobian(self, state: RobotState, *, method: str | None = None) -> NDArray[np.float64]:
         from cablerobot.kinematics.jacobians import cable_jacobian
 
-        return cable_jacobian(self, state)
+        return cable_jacobian(self, state, method=method)
 
     def cable_force_matrix(self, state: RobotState) -> NDArray[np.float64]:
         return -self.cable_jacobian(state).T
