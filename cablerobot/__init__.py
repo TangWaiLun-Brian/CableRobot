@@ -3,6 +3,7 @@
 from .model import Attachment, Body, Cable, CableRobot, CableRoute, Frame, Joint, JointType, RobotParameters, RobotState, transform
 from .allocation import AllocationStatus, TensionAllocationResult, allocate_tensions, solve_tension_allocation
 from .allocation import EquilibriumTensionResult, allocate_reference_tensions, solve_equilibrium_tensions
+from .allocation import BoundedAllocationStatus, BoundedTensionResult, allocate_best_effort_tensions, solve_bounded_equilibrium_tensions, ResidualScaling, spatial_wrench_scaling
 from .kinematics import solve_configuration_from_lengths, solve_frame_position, solve_frame_pose
 from .statics import cable_generalized_force, equilibrium_residual, gravity_generalized_force
 
@@ -16,4 +17,6 @@ __all__ = [
     "solve_frame_position", "solve_tension_allocation", "transform",
     "solve_frame_pose",
     "EquilibriumTensionResult", "allocate_reference_tensions", "solve_equilibrium_tensions",
+    "BoundedAllocationStatus", "BoundedTensionResult", "allocate_best_effort_tensions",
+    "solve_bounded_equilibrium_tensions", "ResidualScaling", "spatial_wrench_scaling",
 ]
