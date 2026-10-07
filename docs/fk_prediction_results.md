@@ -1,6 +1,9 @@
 # FK continuity / prediction — developer study
 
-2026-10-07. **IMPLEMENTED — AWAITING REVIEW**, part of the best-effort study.
+2026-10-07. **COMPLETED — ACCEPTED**, external verdict ACCEPT with no required
+code amendment, as part of the best-effort study. See the
+[permanent record](milestones/best_effort_study_01_allocation_fk.md), acceptance
+tag `best-effort-study-1`. Closure changes no predictor or production code.
 Production FK, Jacobians, convergence tolerance and previous-success warm-start
 default are unchanged. `benchmarks/fk_prediction.py` is a developer script, not
 included as a new production tracking interface in the wheel.
@@ -96,3 +99,10 @@ pass its smoke check. No timing threshold is used, and hosted CI was not run her
 The study's full source and isolated-wheel suites each passed 360 tests with
 warnings-as-errors; see [allocation results](best_effort_results.md). Production
 tracking design, timing/noise robustness and global branch recovery remain deferred.
+
+Fresh acceptance closure retained the previous-success production default and
+developer-only constant-velocity experiment. The 64-sample four-path/two-policy
+smoke with `--require-convergence` again completed with zero failures; the full
+source suite passed 360 tests in 18.47 s, warnings-as-errors. This correctness
+rerun does not replace the historical 12,000-frame measurements or certify the
+new best-effort allocation at 50 Hz. No further milestone was started.

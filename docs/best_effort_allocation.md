@@ -2,8 +2,14 @@
 
 Starting accepted revision: `469e62e04672e8af35e28a3a3301683151a8bea7`
 (`milestone-2` / `performance-study-1`). Authorized on 2026-10-07.
-Status: IMPLEMENTED — AWAITING REVIEW. This is an authorized study, not an
-accepted/tagged milestone. See `best_effort_results.md` and `fk_prediction_results.md`.
+Status: COMPLETED — ACCEPTED on 2026-10-07, with no required code amendment.
+Acceptance tag: `best-effort-study-1`; see the
+[permanent record](milestones/best_effort_study_01_allocation_fk.md).
+The preimplementation decisions below remain historical; closure changes no code.
+Best-effort allocation is not yet 50 Hz validated. Nonzero residual requires
+external support or motion. Production FK remains previous-success; constant
+velocity prediction remains a developer experiment. No further milestone started.
+See `best_effort_results.md` and `fk_prediction_results.md` for measured evidence.
 
 ## Architecture decision recorded before implementation
 

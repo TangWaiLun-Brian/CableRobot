@@ -103,7 +103,8 @@ expose convergence uncertainty through result status.
 
 Milestone 2 and the first computational study are accepted. The explicitly
 authorized [best-effort allocation / FK warm-start study](best_effort_allocation.md)
-is IMPLEMENTED — AWAITING REVIEW, not an accepted next milestone. Separate
+is COMPLETED — ACCEPTED on 2026-10-07, with no required code amendment; see its
+[permanent record](milestones/best_effort_study_01_allocation_fk.md). Separate
 `allocation/best_effort.py` and `allocation/scaling.py` own additive result/status
 and numerical scaling contracts. The robot wrapper forms canonical B/gravity/bounds,
 uses the accepted exact/reference QP whenever equilibrium may exist, and otherwise
@@ -114,7 +115,11 @@ screen candidate is itself a command. Projected LS and small-system exhaustive
 fallback are reused, not reimplemented. Old allocators, backend contracts, model,
 derivatives and FK remain unchanged. FK prediction lives only in a developer
 benchmark; no new production tracking API/cache is introduced. Hardware
-communication remains outside the current implementation.
+communication remains outside the current implementation. Acceptance does not
+validate best-effort allocation at 50 Hz. Nonzero residual needs external support
+or motion; production FK warm start remains previous-success, with constant
+velocity retained only as a guarded developer experiment. No further milestone
+has begun.
 
 ## Routing animation extension
 

@@ -1,10 +1,15 @@
 # Best-effort bounded allocation — study results
 
-2026-10-07. **IMPLEMENTED — AWAITING REVIEW**. No acceptance tag or completed
-milestone record. Accepted baseline: `469e62e04672e8af35e28a3a3301683151a8bea7`.
+2026-10-07. **COMPLETED — ACCEPTED**, external verdict ACCEPT with no required
+code amendment. Acceptance tag: `best-effort-study-1`; see the
+[permanent record](milestones/best_effort_study_01_allocation_fk.md).
+Best-effort allocation remains **not yet 50 Hz validated**; other support must
+balance nonzero residual or motion may occur. Accepted baseline:
+`469e62e04672e8af35e28a3a3301683151a8bea7`.
 Initial implementation: `92b51c066b87747ac0fc5742111e89b12c7fe9df`.
 Refined numerical implementation/tests: `924f7160478dd2c01e26c1cc63f67f8eaf42142f`.
-The review handoff records its final documentation/CI commit separately.
+Reviewed handoff: `8d0660555e69ef80095cf68eae8a1b0e4658bb11`.
+Closure is documentation-only; historical measurements below are unchanged.
 
 ## Implemented contract
 
@@ -174,6 +179,10 @@ relaxed. Coarse FK sampling failures are disclosed in the FK report.
     tracking API, dynamics/inertia/friction/contact/support models, stiffness,
     workspace algorithms, sag/elasticity/pulleys and MATLAB migration.
 
-Review focus: conservative scaling/optimality/separation checks, lexicographic
-force-image preservation, exact-path compatibility and the deliberate limitations
-of this model-only proposal. Do not start the next milestone before review.
+The external review accepted the study without code amendment, within the
+documented model/measurement limits. Fresh acceptance closure: 296 targeted passed
+in 15.50 s and 360 full-suite passed in 18.47 s, warnings-as-errors; zero
+failures/skips/warnings. Relevant exact/boundary examples and both guarded FK and
+accepted default-pipeline smoke checks passed. Commands and review preservation
+are recorded in the permanent record. No new production predictor, real-time
+claim, source/test change or next milestone is introduced at closure.

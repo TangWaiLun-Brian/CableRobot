@@ -20,9 +20,15 @@ The separately authorized [performance study](docs/performance_results.md) is al
 Acceptance tags are `milestone-2` and `performance-study-1`. The temporary review
 folders are retired; exported review archives are preserved outside the repository.
 The separately authorized best-effort bounded allocation / FK warm-start study is
-**IMPLEMENTED — AWAITING REVIEW**. See its [design](docs/best_effort_allocation.md),
+**COMPLETED — ACCEPTED** on 2026-10-07, with no required code amendment. See its
+[permanent record](docs/milestones/best_effort_study_01_allocation_fk.md),
+[design](docs/best_effort_allocation.md),
 [allocation results](docs/best_effort_results.md) and
-[FK predictor results](docs/fk_prediction_results.md). It is not accepted or tagged.
+[FK predictor results](docs/fk_prediction_results.md). Acceptance tag:
+`best-effort-study-1`. Best-effort allocation is **not yet 50 Hz validated**;
+nonzero residual requires external support or motion. Previous-success FK warm
+start remains the production default; velocity prediction is developer-only.
+No further milestone has begun.
 Read [contribution instructions](CONTRIBUTING.md) and the required
 [development workflow](docs/development_workflow.md) before changing it.
 
