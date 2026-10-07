@@ -2,7 +2,8 @@
 
 Starting accepted revision: `469e62e04672e8af35e28a3a3301683151a8bea7`
 (`milestone-2` / `performance-study-1`). Authorized on 2026-10-07.
-Status: IN DEVELOPMENT; stop IMPLEMENTED — AWAITING REVIEW at handoff.
+Status: IMPLEMENTED — AWAITING REVIEW. This is an authorized study, not an
+accepted/tagged milestone. See `best_effort_results.md` and `fk_prediction_results.md`.
 
 ## Architecture decision recorded before implementation
 
@@ -68,7 +69,8 @@ changing the primary force image. Recheck final primary optimality and force-ima
 preservation within a separately reported optimality tolerance. Secondary failure
 does not become a verified BEST_EFFORT result; diagnostics remain available.
 
-The exact-first robot API calls the accepted `solve_equilibrium_tensions` first.
+The INITIAL exact-first design called `solve_equilibrium_tensions` first; the
+measured refinement below supersedes its unconditional call order.
 On success, return that same tension solution/diagnostics with scaling metadata;
 do NOT run both problems. With `best_effort=False`, return exact-only status and
 no approximate command. Otherwise fall back after infeasible/unresolved exact
@@ -79,9 +81,10 @@ no alternate robot-model implementation or geometry cache is introduced.
 Alternatives: adding flags to the accepted function would change its result contract;
 a penalty sum could sacrifice equilibrium for pretension; introducing another BVLS
 or external QP dependency would duplicate the available validated numerical path.
-Reuse plus explicit new optimum checks is selected. The foundation exhaustive
-small-system / projected larger-system costs remain; no 50 Hz fallback claim is
-assumed. Poor conditioning, infinite support or exhausted secondary budget may
+Reuse plus explicit new optimum checks is selected. The initial foundation
+exhaustive small-system / projected larger-system path was subsequently refined
+as documented below; no 50 Hz fallback claim is assumed. Poor conditioning,
+infinite support or exhausted secondary budget may
 remain unresolved. Document actual timings, not generic global guarantees.
 
 ## FK predictor experiment (not a production solver replacement)

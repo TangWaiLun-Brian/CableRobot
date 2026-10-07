@@ -40,6 +40,10 @@ jobs:
         run: python -m examples.equilibrium_allocation --samples 9 --output-dir examples/output/equilibrium
       - name: Pipeline benchmark correctness smoke (no timing threshold)
         run: python -m benchmarks.control_pipeline --frames 20 --repeats 1 --profile-frames 3 --output-dir examples/output/performance/ci
+      - name: Best-effort feasibility-boundary smoke
+        run: python -m examples.best_effort_allocation --samples 9 --output-dir examples/output/best_effort/ci
+      - name: FK predictor correctness smoke (no timing threshold)
+        run: python -m benchmarks.fk_prediction --frames 64 --repeats 1 --require-convergence --output-dir examples/output/fk_prediction/ci
       - name: Short three-topology GIF smoke test
         run: python -m examples.animate_robots --duration 0.3 --fps 10 --format gif --output-dir examples/output/ci
       - name: Build wheel

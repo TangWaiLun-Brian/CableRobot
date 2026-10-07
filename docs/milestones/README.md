@@ -15,7 +15,11 @@
 Temporary `.review/` handoffs are removed at acceptance and remain gitignored.
 Exported small review archives remain outside the repository. Permanent records
 retain capabilities, decisions, validation, limitations and deferred work. Historical
-Milestone 1 documentation/tag is unchanged. No later milestone has begun.
+Milestone 1 documentation/tag is unchanged.
+
+The authorized [best-effort allocation / FK warm-start study](../best_effort_results.md)
+is **IMPLEMENTED — AWAITING REVIEW**. Its provisional design/results are outside
+this accepted-record directory; no completed record or acceptance tag is created yet.
 
 Future milestones follow `../development_workflow.md`; do not treat an
 implemented or tested state as acceptance before its review is resolved.

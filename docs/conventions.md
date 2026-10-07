@@ -132,3 +132,30 @@ Only new results with status `feasible` expose a `tension_command`; other tensio
 are diagnostic candidates. Activity masks use `tolerance * (1 + abs(t_i))` N;
 reserves are `t-lower` and `upper-t` in N, +infinity for an unbounded upper reserve.
 See `tension_allocation.md` for algorithm, limitations and control boundaries.
+
+## Additive best-effort allocation
+
+`solve_bounded_equilibrium_tensions` has a separate result/status contract; accepted
+exact APIs above are unchanged. Its residual is `r=B @ t-target`, with
+`target=-(gravity+other_applied_load)`. Minimize `0.5*||S r||^2` under the SAME
+nonnegative tension bounds, then `0.5*||W(t-t_ref)||^2` subject to preserving the
+primary force image. S must be explicit, finite and nonsingular; a positive scalar
+or diagonal vector is accepted. No default raw mixed-unit objective is implied.
+`spatial_wrench_scaling(Lc, generalized_force_from_wrench=G)` uses
+`diag(1,1,1,1/Lc,1/Lc,1/Lc) @ inverse(G)`; G maps world force/moment about the
+selected frame origin into the full generalized vector. Identity is meaningful
+only for already Cartesian wrench input. Force/moment fields require this explicit
+physical map. Generic generalized components retain their native coordinate units.
+
+FEASIBLE uses the unchanged original-space equilibrium threshold above.
+BEST_EFFORT additionally requires verified primary box optimality, verified
+reference selection/force-image preservation, and original-space separation beyond
+that threshold. Optimality tolerance is separate (default `1e-8`); guarded primary
+gap must be at most `optimality_tolerance*(1+primary_objective)` and projected KKT
+violation at most `optimality_tolerance*(1+||S B||_2*||S r||)`. Scaled force-image
+change is at most `optimality_tolerance*(1+stage1_weighted_residual_norm)`.
+These are numerical checks, not exact-arithmetic certificates. Inconclusive primary,
+secondary or separation checks remain unresolved. Only FEASIBLE/BEST_EFFORT expose
+copied proposed commands; neither authorizes hardware or proves dynamic stability.
+Nonzero residual requires balancing force `-r` from another source or motion can
+occur. Activity/reserve conventions remain unchanged. See `best_effort_allocation.md`.

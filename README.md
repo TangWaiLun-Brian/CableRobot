@@ -19,7 +19,10 @@ The separately authorized [performance study](docs/performance_results.md) is al
 [permanent record](docs/milestones/performance_study_01_pipeline.md).
 Acceptance tags are `milestone-2` and `performance-study-1`. The temporary review
 folders are retired; exported review archives are preserved outside the repository.
-No later milestone has begun.
+The separately authorized best-effort bounded allocation / FK warm-start study is
+**IMPLEMENTED — AWAITING REVIEW**. See its [design](docs/best_effort_allocation.md),
+[allocation results](docs/best_effort_results.md) and
+[FK predictor results](docs/fk_prediction_results.md). It is not accepted or tagged.
 Read [contribution instructions](CONTRIBUTING.md) and the required
 [development workflow](docs/development_workflow.md) before changing it.
 
@@ -38,6 +41,8 @@ python examples/serial_robot.py --output examples/output/serial.png
 python -m examples.animate_robots --duration 5 --fps 20 --format gif
 python -m examples.equilibrium_allocation --output-dir examples/output/equilibrium
 python -m benchmarks.control_pipeline --output-dir examples/output/performance/study
+python -m examples.best_effort_allocation --output-dir examples/output/best_effort
+python -m benchmarks.fk_prediction --frames 500 --repeats 3 --output-dir examples/output/fk_prediction
 ```
 
 Omit `--output` to open an interactive Matplotlib figure. For headless environments,
@@ -110,6 +115,37 @@ not real-time, friction compensation or experimental proof of uniform operator f
 The example compares equal 20 N with equilibrium allocation at individual poses and
 along an 81-pose translational sweep, including a deliberately infeasible bounds case.
 
+The additive `solve_bounded_equilibrium_tensions` API prefers the SAME exact
+reference solution, otherwise minimizes explicitly scaled residual under bounds
+and selects a reference-optimal tension at that force image. Its distinct
+`BEST_EFFORT` status is **not equilibrium**: the full uncompensated residual is
+returned. Invalid inputs raise `ValueError`; unresolved/failure results have no
+command. Existing exact APIs have no changed defaults. For a six-coordinate
+floating platform (not a generic six-coordinate mechanism):
+
+```python
+from cablerobot import solve_bounded_equilibrium_tensions, spatial_wrench_scaling
+from cablerobot.analysis import frame_twist_jacobian
+
+scaling = spatial_wrench_scaling(
+    0.2,  # explicit characteristic length [m]
+    generalized_force_from_wrench=frame_twist_jacobian(robot, state, "moving_platform").T,
+)
+result = solve_bounded_equilibrium_tensions(
+    robot, state, reference_tension=20, residual_weights=scaling,
+)
+proposal = result.tension_command  # None for an unverified solve; not hardware permission
+residual = result.residual         # full original generalized vector, even if no command
+```
+
+Serial/hybrid users supply meaningful positive per-coordinate scaling (or a
+nonsingular `ResidualScaling` map); the core never assumes six coordinates.
+The spatial helper converts actual moment residuals using the caller's wrench map,
+including at nonzero rotvec; generalized angular covectors are not direct moments.
+Other support must supply `-residual` or motion may occur. The new trajectory is a
+prescribed static-pose study, not dynamics. FK continues to start from the last
+successful pose; constant-velocity prediction remains a guarded developer experiment.
+
 `analyze_wrench_workspace` currently analyzes **one configuration**, returning the
 bounded generalized-force set and optionally a feasibility result. Full workspace
 sampling, wrench closure and stiffness analysis are planned interfaces.
@@ -124,6 +160,8 @@ motors, flexible links, closed kinematic loops and hardware communication are de
 - [Numerical backends and MATLAB boundary](docs/backends.md)
 - [Pose-dependent tension allocation](docs/tension_allocation.md)
 - [Computational performance study and measured results](docs/performance_results.md)
+- [Best-effort bounded allocation and study results](docs/best_effort_results.md)
+- [FK continuity / predictor measurements](docs/fk_prediction_results.md)
 - [Validation report](docs/validation.md)
 - [Serial/hybrid cable routing and animations](docs/routing_animation.md)
 - [Review correction decisions](docs/review_corrections.md)

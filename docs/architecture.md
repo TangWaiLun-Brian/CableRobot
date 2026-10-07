@@ -101,8 +101,19 @@ dependency is introduced. Exhaustive active sets are capped at eight cables
 to keep the reference allocator small and predictable; larger cases explicitly
 expose convergence uncertainty through result status.
 
-Milestone 2 and the computational study are accepted; no later milestone has begun.
-A separate scope decision is required before new implementation. Hardware
+Milestone 2 and the first computational study are accepted. The explicitly
+authorized [best-effort allocation / FK warm-start study](best_effort_allocation.md)
+is IMPLEMENTED — AWAITING REVIEW, not an accepted next milestone. Separate
+`allocation/best_effort.py` and `allocation/scaling.py` own additive result/status
+and numerical scaling contracts. The robot wrapper forms canonical B/gravity/bounds,
+uses the accepted exact/reference QP whenever equilibrium may exist, and otherwise
+performs certified residual minimization followed by reference selection at the
+unique force image. A bounded feasible witness avoids unnecessary primary screening;
+original-space separation permits skipping a known-impossible exact QP. Neither
+screen candidate is itself a command. Projected LS and small-system exhaustive
+fallback are reused, not reimplemented. Old allocators, backend contracts, model,
+derivatives and FK remain unchanged. FK prediction lives only in a developer
+benchmark; no new production tracking API/cache is introduced. Hardware
 communication remains outside the current implementation.
 
 ## Routing animation extension
