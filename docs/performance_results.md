@@ -1,7 +1,9 @@
 # Measured performance results
 
-Study scope: **IMPLEMENTED — AWAITING REVIEW**, not hardware acceptance or a new
-physical-model milestone. Measurements on 2026-10-06, same AMD Ryzen 7 3700X
+Study status: **COMPLETED — ACCEPTED** on 2026-10-07, with no required code amendment;
+see the [permanent record](milestones/performance_study_01_pipeline.md) and tag
+`performance-study-1`. This is not hardware acceptance or a new physical-model
+milestone. Measurements on 2026-10-06, same AMD Ryzen 7 3700X
 (8 cores/16 logical), Windows x64, Python 3.12.13, NumPy 2.1.0, Matplotlib 3.9.2.
 Python: C:\Users\thisi\anaconda3\python.exe. OPENBLAS_NUM_THREADS,
 MKL_NUM_THREADS and OMP_NUM_THREADS were each explicitly 1 in both runs.
@@ -208,10 +210,18 @@ The new 20-frame CI benchmark command was also run locally: both workloads have
 run, not part of the primary 500-frame performance comparison; no host-dependent
 timing threshold is asserted. The hosted OS/Python matrix has not been run here.
 
-Pending review questions: derivative propagation/rotvec convention and unsupported
+Questions considered by the accepted external review: derivative propagation/rotvec
+convention and unsupported
 contact boundary; default analytic compatibility/reference selectors; benchmark
 latency boundaries/profiler accounting; whether noisy/loaded-machine validation
 should be required before any hardware-control decision. MATLAB remains optional
 and unimplemented, not justified as a first performance fix by the measured results.
 No physical milestone, dynamics, friction, sag/elasticity, stiffness/manipulability,
-sensors/drivers or hardware control is added. No acceptance tag is created.
+sensors/drivers or hardware control is added. The acceptance tag identifies the
+reviewed software/study scope, not operational or hard-real-time certification.
+
+Acceptance closure on 2026-10-07 reran targeted tests (217 passed in 14.08 s),
+the full suite (266 passed in 15.63 s), relevant equilibrium/spatial/serial examples,
+four short GIF exports and a 20-frame pipeline smoke per workload. No code/test
+amendment or tolerance change was made. These checks do not replace or remeasure
+the primary 500-frame before/after results above; see the permanent closure record.

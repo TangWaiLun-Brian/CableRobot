@@ -1,7 +1,9 @@
 # Pose-dependent tension allocation and gravity compensation
 
 Milestone 2 implementation plan, recorded before source changes on 2026-10-06.
-Status: **IMPLEMENTED — AWAITING REVIEW**. The accepted `milestone-1` boundary is unchanged.
+Status: **COMPLETED — ACCEPTED** on 2026-10-07, with no required code amendment.
+See the [permanent Milestone 2 record](milestones/milestone_02_tension_allocation.md)
+and acceptance tag `milestone-2`. The accepted `milestone-1` boundary is unchanged.
 This records the original Milestone 2 review at `d5b733d`. A separately authorized
 [performance study](performance_study.md) later improves derivative/geometry evaluation,
 without changing either allocator algorithm or physical conventions. Historical
@@ -36,7 +38,8 @@ the small exhaustive solver would lose a regression oracle. SciPy QP/optimizatio
 or an external QP dependency would introduce installation/backend requirements.
 Enumerating all box faces is exponential for generic many-cable robots. Use a
 dependency-free dual solver, with explicit unresolved status, instead. This solver
-choice and numerical certification limits are open external-review questions.
+choice and numerical certification limits were reviewed and accepted without
+amendment; the documented limitations still apply.
 
 ## Formulation and conventions
 
@@ -167,10 +170,13 @@ loads constructed from bounded tension witnesses, retain both outer-frame/on-rob
 routes, and check ALL joint/platform coordinates. They do not misrepresent these
 particular geometries as gravity-supporting hardware designs.
 
-Review questions: suitability of the dependency-free dual solver and its budget/
+Questions considered by the accepted external review: suitability of the
+dependency-free dual solver and its budget/
 numerical gap criterion for future use; sufficient diagnostics before control
 integration; whether a future implemented backend merits a separate QP protocol.
-Finite-difference and mixed-coordinate conditioning remain limitations. Tolerance
+The subsequently accepted performance study makes analytic derivatives the default
+while retaining finite differences as a reference. Mixed-coordinate conditioning
+remains a limitation. Tolerance
 and input scaling may lead to unresolved results; no hard real-time guarantee.
 
 ## Verification at the review boundary
@@ -210,5 +216,7 @@ CI now includes the new example smoke run. No MP4 rerender was needed for this
 allocation-only change; prior animations remain prescribed, not tension dynamics.
 Git whitespace checks pass, and the accepted core/math/backends and old tests are
 unchanged. The temporary review package records exact commands and audited Git SHA.
-External acceptance, a permanent Milestone 2 completion record/tag, and any later
-milestone remain pending.
+These are historical results at `d5b733d`. External acceptance was received on
+2026-10-07 with no code amendment. The permanent record includes fresh integrated
+closure validation and the accepted `milestone-2` Git boundary. The temporary review
+folder is removed; its exported archive is preserved. No later milestone has begun.

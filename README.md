@@ -11,10 +11,15 @@ adapter boundary.
 Milestone 1 is **COMPLETED — ACCEPTED FOUNDATION**; see its
 [permanent milestone record](docs/milestones/milestone_01_foundation.md).
 Milestone 2, **Pose-Dependent Tension Allocation and Gravity Compensation**, is
-**IMPLEMENTED — AWAITING REVIEW**. See the [formulation and decisions](docs/tension_allocation.md)
-and the temporary `.review/review_summary.md` handoff. No later milestone has begun.
+**COMPLETED — ACCEPTED** on 2026-10-07, with no required code amendment. See its
+[permanent record](docs/milestones/milestone_02_tension_allocation.md) and
+[formulation and decisions](docs/tension_allocation.md).
 The separately authorized [performance study](docs/performance_results.md) is also
-**IMPLEMENTED — AWAITING REVIEW**; it preserves Milestone 2's pending review package.
+**COMPLETED — ACCEPTED**; see its
+[permanent record](docs/milestones/performance_study_01_pipeline.md).
+Acceptance tags are `milestone-2` and `performance-study-1`. The temporary review
+folders are retired; exported review archives are preserved outside the repository.
+No later milestone has begun.
 Read [contribution instructions](CONTRIBUTING.md) and the required
 [development workflow](docs/development_workflow.md) before changing it.
 

@@ -6,14 +6,18 @@ Review status: **COMPLETED — ACCEPTED FOUNDATION**. See the
 compatibility consequences of the current hardening, recorded before its code
 changes. Model topology, state ordering and force signs are unchanged.
 
-Milestone 2 is **IMPLEMENTED — AWAITING REVIEW**. Its additive allocation API and
+Milestone 2 is **COMPLETED — ACCEPTED** on 2026-10-07, with no required code amendment.
+See its [permanent record](milestones/milestone_02_tension_allocation.md).
+Its additive allocation API and
 numerical decisions were [documented before implementation](tension_allocation.md).
 It reuses the foundation geometry, Jacobians, B and gravity without modification.
 That statement describes its original reviewed revision `d5b733d`. The subsequently
-authorized [computational study](performance_study.md), also awaiting review,
+authorized [computational study](performance_study.md), also accepted on 2026-10-07,
 preserves model semantics but makes analytic derivatives the default and adds
 validated call-local geometry reuse. Its [measured results](performance_results.md)
-are distinct from Milestone 2 acceptance; neither pending task is accepted yet.
+remain a distinct computational validation, not hardware acceptance. Both are
+closed at the same integrated Git boundary; see the
+[study record](milestones/performance_study_01_pipeline.md).
 
 `CableRobot` owns bodies, joints, frames, routes, physical parameters and coordinate
 ordering. Topology is a directed tree or forest with one parent per non-root body.
@@ -24,11 +28,13 @@ Deterministic maps share one geometry implementation:
 
 ```text
 RobotState.q -> body/frame transforms -> world route points -> cable lengths
-                                                     -> numerical cable Jacobian
+                                                     -> cable Jacobian
                                                          -> B = -J_l.T
 ```
 
-Nonlinear solvers consume these maps. Statics uses COM point Jacobians and B.
+Cable/point Jacobians default to analytic derivatives; centralized finite differences
+remain selectable references. Nonlinear solvers consume these maps. Statics uses
+COM point Jacobians and B.
 The allocator consumes numerical arrays only and does not own any geometry.
 It is a bounded static-equilibrium/reference numerical implementation. Small
 problems enumerate active sets and compare residual norm, then tension norm,
@@ -86,16 +92,17 @@ workspace grid algorithm.
 ## Choices relative to the bootstrap specification
 
 The suggested subsystem layout is retained. `model/transforms.py` centralizes SE(3)
-utilities and `cablerobot/examples.py` holds reusable model constructors. Analytic
-joint Jacobians and automatic differentiation are deferred in favor of a single
-topology-independent numerical reference, validated against physical invariants.
+utilities and `cablerobot/examples.py` holds reusable model constructors. The
+foundation initially used a single topology-independent numerical reference rather
+than analytic derivatives or automatic differentiation, validating physical invariants.
 The later performance study retains this centralized finite-difference path as an
 explicit reference while adding generic analytic cable/point derivatives. No SciPy
 dependency is introduced. Exhaustive active sets are capped at eight cables
 to keep the reference allocator small and predictable; larger cases explicitly
 expose convergence uncertainty through result status.
 
-No later milestone begins until Milestone 2 external review is resolved. Hardware
+Milestone 2 and the computational study are accepted; no later milestone has begun.
+A separate scope decision is required before new implementation. Hardware
 communication remains outside the current implementation.
 
 ## Routing animation extension

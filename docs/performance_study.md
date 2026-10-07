@@ -1,10 +1,15 @@
 # FK + equilibrium pipeline performance study
 
+Status: **COMPLETED — ACCEPTED** on 2026-10-07, with no required code amendment.
+See the [permanent study record](milestones/performance_study_01_pipeline.md) and
+acceptance tag `performance-study-1`. Milestone 2 was accepted at the same time.
+
 Scope authorized on 2026-10-06: computational study of the implemented pipeline,
-not a new physical-model milestone or acceptance of Milestone 2. Starting revision
-`d5b733d204bf382db68f44415469ed7f01ff962d` is implemented, awaiting review. Its
-existing `.review/` and exported review ZIP will be preserved. This study's separate
-handoff will be `.review/performance_study/` to avoid overwriting pending review.
+not a new physical-model milestone or hardware acceptance. At study start, revision
+`d5b733d204bf382db68f44415469ed7f01ff962d` was implemented, awaiting review. Its
+existing `.review/` was preserved and this study's handoff used the separate
+`.review/performance_study/` folder. Both temporary folders are retired at acceptance;
+their exported review ZIPs remain preserved outside the repository.
 
 ## Plan recorded before optimization
 
@@ -50,7 +55,7 @@ logging/OS jitter. Report mean/median/p95/max, overruns and limitations honestly
 ordinary Python tests do not establish hard-real-time behavior. MATLAB stays a stub,
 not a per-frame migration. Final targeted/full tests and actual benchmark evidence
 must precede an IMPLEMENTED — AWAITING REVIEW handoff, with selected canonical files.
-Current status: **IMPLEMENTED — AWAITING REVIEW**. See `performance_results.md` for
+The handoff was reviewed and accepted without amendment. See `performance_results.md` for
 actual before/after timings, correctness comparisons, profiler counts and limitations.
 
 ## Decision recorded after baseline profiling, before core changes
@@ -109,8 +114,8 @@ Compatibility: existing valid calls/shapes/units/signs remain; default floating-
 values improve from finite-difference approximations, so exact historical bit patterns
 are not promised. Users explicitly supplying a step retain numerical differentiation.
 Explicit analytic method plus a finite-difference step is invalid, rather than ignored.
-New method selectors and all supported-tree analytic derivatives require external
-review before acceptance. No hard-real-time guarantee follows from this change.
+New method selectors and all supported-tree analytic derivatives received external
+acceptance on 2026-10-07. No hard-real-time guarantee follows from this change.
 
 Tests required: many seeded spatial/serial/hybrid/offset-joint analytic-vs-independent
 five-point derivatives, nonzero/near-zero/near-pi rotvec, rotated joint frames/postoffsets,
