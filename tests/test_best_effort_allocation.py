@@ -147,7 +147,8 @@ def test_exact_first_is_identical_and_does_not_run_both(monkeypatch):
     exact=solve_equilibrium_tensions(robot,state,reference_tension=20,weights=np.arange(1,9))
     def forbidden(*args,**kwargs):
         raise AssertionError('fallback must not run on a verified exact solution')
-    monkeypatch.setattr(implementation,'allocate_best_effort_tensions',forbidden)
+    monkeypatch.setattr(implementation,'_allocate_best_effort_tensions',forbidden)
+    monkeypatch.setattr(implementation,'_primary_candidate',forbidden)
     result=solve_bounded_equilibrium_tensions(robot,state,residual_weights=[1,1,1,5,5,5],reference_tension=20,weights=np.arange(1,9))
     assert result.status is Status.FEASIBLE and result.exact_equilibrium
     np.testing.assert_array_equal(result.tensions,exact.tensions)
@@ -161,6 +162,42 @@ def test_exact_only_preserves_infeasible_no_command(slider):
     result=solve_bounded_equilibrium_tensions(robot,state,[-100],residual_weights=1,best_effort=False)
     assert result.status is Status.INFEASIBLE and result.tension_command is None
     assert result.exact_result.status.value=='infeasible'
+
+
+def test_certified_impossible_screen_skips_exact_qp_and_reuses_primary(slider,monkeypatch):
+    robot,state=slider
+    original_primary=implementation._primary_candidate
+    original_reference=implementation.allocate_reference_tensions
+    primary_calls=[]; reference_targets=[]
+    def primary(*args):
+        primary_calls.append(1)
+        return original_primary(*args)
+    def reference(matrix,target,*args,**kwargs):
+        reference_targets.append(target.copy())
+        return original_reference(matrix,target,*args,**kwargs)
+    monkeypatch.setattr(implementation,'_primary_candidate',primary)
+    monkeypatch.setattr(implementation,'allocate_reference_tensions',reference)
+    result=solve_bounded_equilibrium_tensions(robot,state,[-100],residual_weights=1)
+    assert result.status is Status.BEST_EFFORT and result.exact_result is None
+    assert len(primary_calls)==1 and len(reference_targets)==1
+    np.testing.assert_allclose(reference_targets[0],result.achieved_generalized_force,atol=1e-12)
+    assert not np.allclose(reference_targets[0],result.target_generalized_force)
+
+
+def test_exact_only_never_screens_primary(slider,monkeypatch):
+    def forbidden(*args,**kwargs):
+        raise AssertionError('exact-only cannot call the new primary screen')
+    monkeypatch.setattr(implementation,'_primary_candidate',forbidden)
+    robot,state=slider
+    result=solve_bounded_equilibrium_tensions(robot,state,residual_weights=1,best_effort=False)
+    assert result.status is Status.FEASIBLE
+
+
+def test_inconclusive_projected_candidate_uses_small_reference_fallback(monkeypatch):
+    monkeypatch.setattr(implementation,'_projected_least_squares',lambda *args: np.array([0.]))
+    result=allocate_best_effort_tensions([[1]],[12],[0],[10],residual_weights=1)
+    assert result.status is Status.BEST_EFFORT
+    np.testing.assert_array_equal(result.tensions,[10.])
 
 
 @pytest.mark.parametrize("matrix,target,lower,upper,expected",[
@@ -224,6 +261,8 @@ def test_small_gradient_gap_cannot_certify_false_best_effort(monkeypatch):
                                        np.array([0.]),target,-target,float(np.linalg.norm(target)),
                                        'forced inaccurate candidate with tiny objective gap')
     monkeypatch.setattr(implementation,'allocate_tensions',inaccurate)
+    monkeypatch.setattr(implementation,'_projected_least_squares',
+                        lambda *args: np.array([0.]))
     # Feasible witness t=.5 exists. Coarse objective-gap tolerance alone would
     # accept t=0; physical separation must prevent a false BEST_EFFORT command.
     result=allocate_best_effort_tensions([[1e-5]],[5e-6],[0],[1],residual_weights=1)

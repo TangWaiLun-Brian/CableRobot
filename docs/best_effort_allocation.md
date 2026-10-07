@@ -123,3 +123,38 @@ Git/SHA256 provenance. No acceptance tag or completed milestone record before re
 Excluded: hardware/drivers/motors/CAN, friction, dynamics/inertia compensation,
 stiffness/manipulability/workspace optimization, sag/elasticity/contact/pulleys,
 MATLAB migration or unrelated performance refactoring.
+
+## Measured primary-path refinement, recorded before code changes
+
+Initial validated implementation `92b51c0` produced all 61 trajectory commands
+(38 FEASIBLE, 23 BEST_EFFORT), but infeasible frames averaged 589.27 ms (maximum
+715.34 ms). Exact frames averaged 2.71 ms. Reused exhaustive box search, including
+the old exact solver's fallback, is inappropriate as the DEFAULT new control path.
+This is evidence about the NEW fallback, not a reason to rewrite accepted exact code.
+
+Revised design: reuse the existing projected least-squares routine first and certify
+its candidate with the same guarded gap/KKT/separation checks. Use the unchanged
+exhaustive small-system baseline only if that primary candidate remains inconclusive.
+The new robot wrapper forms arrays solely from canonical B/gravity/bounds, then
+screens the primary residual. If original-space separation is proven, skip the
+known-impossible exact QP and reuse this already computed primary candidate for
+hierarchical reference selection. Otherwise call the accepted exact allocator on
+the ORIGINAL target; feasible tension/objective behavior remains identical. If exact
+is unresolved, fall back with the same primary candidate and conservative checks.
+Exact-only mode skips the screen. This implements the permitted efficient combined
+feasibility/approximation formulation, not a relaxation or relabeling of equilibrium.
+
+The precomputed candidate is an internal call-local value, never a public override
+or persistent cache. Recheck it in the full best-effort path. Numerical failure,
+inconclusive separation and exhausted secondary certification stay distinct. Both
+old allocator files and their defaults are untouched. Measure the revised trajectory
+and retain the initial trace as historical evidence; no worst-case/50 Hz guarantee.
+
+To avoid adding projected iterations to ordinary feasible frames, first test a
+cheap sufficient witness: a least-squares correction of the clipped reference.
+Only a bounded witness meeting the unchanged ORIGINAL equilibrium tolerance
+bypasses primary screening; the unchanged reference QP still selects the command.
+Failure to find this witness says nothing about infeasibility. This is not a
+second reference optimizer, and its candidate is never returned as a command.
+Canonical geometry/load arrays are formed once and passed to the accepted
+`allocate_reference_tensions`; exact-only mode retains the accepted robot wrapper.

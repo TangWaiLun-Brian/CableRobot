@@ -8,7 +8,7 @@ from numpy.typing import NDArray
 
 from .reference import _cable_vector, allocate_reference_tensions, solve_equilibrium_tensions
 from .scaling import ResidualScaling, residual_scaling
-from .tension import AllocationStatus, allocate_tensions, _separates_target
+from .tension import AllocationStatus, allocate_tensions, _separates_target, _projected_least_squares
 
 
 class BoundedAllocationStatus(str, Enum):
@@ -151,6 +151,19 @@ def _result(status, matrix, target, lower, upper, reference, weights, scaling,
     )
 
 
+def _primary_candidate(matrix, target, lower, upper, tolerance):
+    """Reuse projected LS first; retain the small exhaustive baseline as fallback."""
+    tensions = (lower.copy() if not matrix.size or not np.any(matrix) else
+                _projected_least_squares(matrix, target, lower, upper))
+    verified, _, _ = _primary_certificate(matrix, target, lower, upper, tensions, tolerance)
+    if not verified and matrix.shape[1] <= 8:
+        baseline = allocate_tensions(matrix, target, lower, upper, tolerance=tolerance)
+        if baseline.status is AllocationStatus.NUMERICAL_FAILURE:
+            raise np.linalg.LinAlgError(baseline.message)
+        tensions = baseline.tensions
+    return tensions
+
+
 def allocate_best_effort_tensions(force_matrix, target_generalized_force, tension_min,
                                  tension_max, *, residual_weights, reference_tension=0.,
                                  weights=None, tolerance=1e-8, optimality_tolerance=1e-8,
@@ -160,6 +173,18 @@ def allocate_best_effort_tensions(force_matrix, target_generalized_force, tensio
     Explicit residual scaling is mandatory. Original exact APIs are untouched.
     A nonzero-residual BEST_EFFORT command cannot maintain the pose by itself.
     """
+    return _allocate_best_effort_tensions(
+        force_matrix, target_generalized_force, tension_min, tension_max,
+        residual_weights=residual_weights, reference_tension=reference_tension,
+        weights=weights, tolerance=tolerance, optimality_tolerance=optimality_tolerance,
+        max_iterations=max_iterations)
+
+
+def _allocate_best_effort_tensions(force_matrix, target_generalized_force, tension_min,
+                                  tension_max, *, residual_weights, reference_tension=0.,
+                                  weights=None, tolerance=1e-8, optimality_tolerance=1e-8,
+                                  max_iterations=200, primary_candidate=None):
+    """Private call-local reuse only; revalidate and recertify every candidate."""
     _options(tolerance, optimality_tolerance, max_iterations)
     matrix, target = np.asarray(force_matrix, dtype=float), np.asarray(target_generalized_force, dtype=float)
     lower, upper = np.asarray(tension_min, dtype=float), np.asarray(tension_max, dtype=float)
@@ -179,12 +204,8 @@ def allocate_best_effort_tensions(force_matrix, target_generalized_force, tensio
     try:
         with np.errstate(over="raise", invalid="raise", divide="raise", under="ignore"):
             a, b = scaling.matrix @ matrix, scaling.matrix @ target
-            first = allocate_tensions(a, b, lower, upper, tolerance=optimality_tolerance)
-            tensions = first.tensions
-            if first.status is AllocationStatus.NUMERICAL_FAILURE:
-                return _result(BoundedAllocationStatus.NUMERICAL_FAILURE, matrix, target, lower, upper,
-                               reference, weight, scaling, tensions, tolerance, first.message,
-                               optimality_tolerance=optimality_tolerance)
+            tensions = (_primary_candidate(a, b, lower, upper, optimality_tolerance)
+                        if primary_candidate is None else primary_candidate.copy())
             verified, gap, kkt = _primary_certificate(a, b, lower, upper, tensions, optimality_tolerance)
             rho = float(np.linalg.norm(a @ tensions-b))
             if not verified:
@@ -242,15 +263,59 @@ def solve_bounded_equilibrium_tensions(robot, state, external_load=None, *, resi
                                        reference_tension=0., weights=None, include_gravity=True,
                                        best_effort=True, tolerance=1e-8, optimality_tolerance=1e-8,
                                        max_iterations=200):
-    """Exact-first opt-in wrapper; useful approximation is NEVER labeled equilibrium."""
+    """Exact-preferred opt-in wrapper; approximation is NEVER labeled equilibrium.
+
+    A verified original-space separation can bypass an impossible exact QP.
+    Otherwise the accepted reference allocator selects the exact command.
+    """
     _options(tolerance, optimality_tolerance, max_iterations)
     if not isinstance(best_effort, (bool, np.bool_)):
         raise ValueError("best_effort must be boolean")
     scaling = residual_scaling(residual_weights, robot.dof)
-    exact = solve_equilibrium_tensions(robot, state, external_load, reference_tension=reference_tension,
-                                       weights=weights, include_gravity=include_gravity,
-                                       tolerance=tolerance, max_iterations=max_iterations)
-    if exact.feasible or not best_effort or exact.status is AllocationStatus.NUMERICAL_FAILURE:
+    lower, upper = robot.tension_bounds()
+    candidate, matrix, target, exact = None, None, None, None
+    if best_effort:
+        from cablerobot.statics.gravity import gravity_generalized_force
+
+        robot.validate_state(state)
+        robot.validate()
+        reference = _cable_vector(reference_tension, len(lower), "reference_tension")
+        _cable_vector(1. if weights is None else weights, len(lower), "weights", positive=True)
+        applied = gravity_generalized_force(robot, state) if include_gravity else np.zeros(robot.dof)
+        if external_load is not None:
+            extra = np.asarray(external_load, dtype=float)
+            if extra.shape != (robot.dof,) or not np.all(np.isfinite(extra)):
+                raise ValueError("external_load must be a finite generalized vector")
+            applied = applied + extra
+        matrix, target = robot.cable_force_matrix(state), -applied
+        separated = False
+        try:
+            with np.errstate(over="raise", invalid="raise", divide="raise", under="ignore"):
+                # A sufficient witness skips primary screening, not exact QP.
+                base = np.clip(reference, lower, upper)
+                witness = base + np.linalg.lstsq(matrix, target-matrix @ base, rcond=None)[0]
+                threshold = tolerance*(1+np.linalg.norm(target))
+                feasible_witness = (np.all(witness >= lower) and np.all(witness <= upper)
+                                    and np.linalg.norm(matrix @ witness-target) <= threshold)
+                if not feasible_witness:
+                    a, b = scaling.matrix @ matrix, scaling.matrix @ target
+                    candidate = _primary_candidate(a, b, lower, upper, optimality_tolerance)
+                    verified, _, _ = _primary_certificate(a, b, lower, upper, candidate, optimality_tolerance)
+                    separated = verified and _separates_target(
+                        matrix, target, lower, upper, scaling.matrix.T @ (a @ candidate-b), threshold)
+        except (np.linalg.LinAlgError, FloatingPointError):
+            # Screening failure proves nothing. Let the accepted exact solver
+            # attempt its unchanged numerical contract, then conservative fallback.
+            candidate = None
+        if not separated:
+            exact = allocate_reference_tensions(matrix, target, lower, upper,
+                                                reference_tension=reference_tension, weights=weights,
+                                                tolerance=tolerance, max_iterations=max_iterations)
+    else:
+        exact = solve_equilibrium_tensions(robot, state, external_load, reference_tension=reference_tension,
+                                           weights=weights, include_gravity=include_gravity,
+                                           tolerance=tolerance, max_iterations=max_iterations)
+    if exact is not None and (exact.feasible or not best_effort or exact.status is AllocationStatus.NUMERICAL_FAILURE):
         # Recover achieved force without querying B again. Exact-only calls never
         # invoke the residual optimizer; all accepted tension/dual diagnostics remain.
         lower, upper = robot.tension_bounds()
@@ -261,10 +326,9 @@ def solve_bounded_equilibrium_tensions(robot, state, external_load=None, *, resi
                          achieved_override=exact.achieved_generalized_force,
                          optimality_tolerance=optimality_tolerance,
                          certified=exact.status is AllocationStatus.INFEASIBLE)
-    lower, upper = robot.tension_bounds()
-    result = allocate_best_effort_tensions(robot.cable_force_matrix(state), exact.target_generalized_force,
+    result = _allocate_best_effort_tensions(matrix, target,
                                          lower, upper, residual_weights=scaling,
                                          reference_tension=reference_tension, weights=weights,
                                          tolerance=tolerance, optimality_tolerance=optimality_tolerance,
-                                         max_iterations=max_iterations)
+                                         max_iterations=max_iterations, primary_candidate=candidate)
     return replace(result, exact_result=exact)

@@ -106,7 +106,13 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--frames',type=int,default=500); parser.add_argument('--repeats',type=int,default=3)
     parser.add_argument('--output-dir',type=Path,default=Path('examples/output/fk_prediction'))
-    args=parser.parse_args(); run_comparison(args.output_dir,frames=args.frames,repeats=args.repeats)
+    parser.add_argument('--require-convergence',action='store_true',
+                        help='fail the smoke check on any final FK convergence failure')
+    args=parser.parse_args()
+    report=run_comparison(args.output_dir,frames=args.frames,repeats=args.repeats)
+    if args.require_convergence and any(run['failures'] for policies in report['cases'].values()
+                                        for runs in policies.values() for run in runs):
+        raise RuntimeError('FK smoke check contains convergence failures; see recorded diagnostics')
 
 
 if __name__=='__main__':

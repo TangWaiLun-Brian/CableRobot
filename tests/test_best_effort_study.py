@@ -99,3 +99,17 @@ def test_invalid_study_options(tmp_path):
     with pytest.raises(ValueError): _prediction.run_comparison(tmp_path,frames=5,repeats=0)
     robot,state=spatial_cdpr()
     with pytest.raises(ValueError): _prediction.predict_initial_state(robot,state,policy='fixed_reset')
+
+
+@pytest.mark.parametrize('failures',[0,1])
+def test_cli_convergence_smoke_flag_enforces_recorded_result(failures,monkeypatch,tmp_path):
+    import sys
+    monkeypatch.setattr(sys,'argv',['fk_prediction','--frames','64','--repeats','1',
+                                    '--require-convergence','--output-dir',str(tmp_path)])
+    monkeypatch.setattr(_prediction,'run_comparison',lambda *args,**kwargs:
+                        {'cases':{'case':{'previous':[{'failures':failures}]}}})
+    if failures:
+        with pytest.raises(RuntimeError,match='convergence failures'):
+            _prediction.main()
+    else:
+        _prediction.main()
